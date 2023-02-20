@@ -14,15 +14,16 @@
 #include <chrono>
 #include <thread>
 
+#define NUM_OF_MOTORS 1
 // #define IP_ADDRESS "127.0.0.1"
 #define IP_ADDRESS "172.16.1.5"
 #define PORT_NUMBER "77777"
 
-#define TCP_BUFFER_SIZE 256
+#define TCP_BUFFER_SIZE 512
 #define QUEUE_FREQUENCY 1000    // Hz
 #define QUEUE_TIME      1       // ms
 #define TEST_RECV       1
-#define TEST_SEND       1
+#define TEST_SEND       0
 
 #define ACTIVE_UR_ROBOT_PROTOCOL 0
 void ErrorHandling(const char* _Message);
@@ -73,11 +74,15 @@ int main(int argc, const char* argv[])
     char message[] = "Hello World!";
 
     static char recvMsg[TCP_BUFFER_SIZE] = {0};
-    std::string sendMsg;
+    long recv_val[NUM_OF_MOTORS*2];
+    // std::string sendMsg;
+    long send_val[NUM_OF_MOTORS] = {0};
+    char sendMsg[TCP_BUFFER_SIZE] = {};
     int strlen;
     static double joints_vel[7];
     static uint64_t counter = 0;
     static long n = 0;
+
     while(true)
     {   
         #if TEST_RECV
@@ -87,10 +92,13 @@ int main(int argc, const char* argv[])
             std::cout << "TCP/IP disconnected... read() error" << std::endl;
             break;
         }
-        printf("from server : %s, [%d]\n", recvMsg, strlen);
-        std::cout << atol(recvMsg) << std::endl;;
-        std::cout << recvMsg << std::endl;
-        
+        // printf("from client : %d, [%d]\n", recvMsg, strlen);
+        // std::cout << "atol : " << atol(recvMsg) << std::endl;;
+        // std::cout << recvMsg << std::endl;
+
+        memcpy(&recv_val[0], recvMsg, sizeof(long));
+        std::cout << "long : " << recv_val[0] << std::endl;
+  
         #endif
 
         #if TEST_SEND
@@ -98,8 +106,12 @@ int main(int argc, const char* argv[])
         // std::getline(std::cin, sendMsg);
         // uint32_t size_of_sendMsg = send(hClntSock, sendMsg.c_str(), TCP_BUFFER_SIZE, 0);
         // uint32_t size_ofsenMsg = send(hClntSock, message, TCP_BUFFER_SIZE, 0);
-        std::string smsg = std::to_string(n++);
-        uint32_t size_ofsenMsg = send(hClntSock, smsg.c_str(), TCP_BUFFER_SIZE, 0);
+        send_val[0] = send_val[0]+1;
+        memcpy(sendMsg, &send_val[0], sizeof(long));
+        std::cout << "send : " << sendMsg << std::endl;
+        //std::string smsg = std::to_string(n++);
+        // uint32_t size_ofsenMsg = send(hClntSock, smsg.c_str(), TCP_BUFFER_SIZE, 0);
+        uint32_t size_ofsenMsg = send(hClntSock, sendMsg, TCP_BUFFER_SIZE, 0);
 
 
 

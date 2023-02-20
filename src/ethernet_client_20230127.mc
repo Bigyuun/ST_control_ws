@@ -95,7 +95,16 @@ long main(void)
 	This command can be used to receive a telegram if there is one in the buffer.
 	The socket connection previously has to be setup with EthernetOpenClient or EthernetOpenServer. The connection status has to be SOCK_STATUS_READY = 3.
 	*/
-	retVal = EthernetSendTelegram(socketHandle, Swdata, arraylen(Swdata));
+	rrV++;
+	if(rrV<=1000)
+	{
+		retVal = EthernetSendTelegram(socketHandle, Swdata, arraylen(Swdata));
+	}
+	else
+	{
+		print("done");
+	}
+
 	//Delay(1);
 	}
 

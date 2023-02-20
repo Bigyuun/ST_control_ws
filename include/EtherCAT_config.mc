@@ -1,7 +1,10 @@
 #pragma once
-#include "./EtherCAT_config.mh"
 
-long EtherCAT_configuration()
+#include <SysDef.mh>
+#include "EtherCAT_definition.mh"
+#include "EtherCAT_config.mh"
+
+long EtherCAT_configuration(void)
 {
 	long n_slaves, i, retval, retval1, res, retval2;
 	print("Start configuring EtherCAT...");
@@ -11,12 +14,17 @@ long EtherCAT_configuration()
 	//----------------------------------------------------------------
 	print("Error clear & setup updating...");
 	ErrorClear();
-//	for(i=0,i<g_NUM_OF_SLAVES;i++)
-//	{
-//		AmpErrorClear(i);
-//	}
+
+	#if g_ETHERCAT_CONFIG_INDIVIDUAL
+	for(i=0,i<g_NUM_OF_SLAVES;i++)
+	{
+		AmpErrorClear(i);
+	}
+	#else
 	AmpErrorClear(AXALL); 			// Clear error on EPOS4
+	#endif
 	ECatMasterCommand(0x1000, 0);	// The master itself
+
 
 	//----------------------------------------------------------------
 	// Application Setup
@@ -25,64 +33,81 @@ long EtherCAT_configuration()
 	print("Number of Slaves (from header) : ", g_NUM_OF_SLAVES);
 	print("Number of Slaves (found on bus): ", n_slaves);
 
-	// initialising maxon drives
-	for(i=0;i<g_NUM_OF_SLAVES;i++)
-	{
-		sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1+i, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
-	}
-	//sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1, C_PDO_NUMBER, C_AXIS1_POLARITY, EPOS4_OP_CSV );
+	//----------------------------------------------------------------
+	// Initialization of MAXON Drives
+	//----------------------------------------------------------------
+	#if g_ETHERCAT_CONFIG_INDIVIDUAL
+	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1, C_PDO_NUMBER, C_AXIS1_POLARITY, EPOS4_OP_CSV );
 	//sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID2, C_PDO_NUMBER, C_AXIS2_POLARITY, EPOS4_OP_CSV );
 	//sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID3, C_PDO_NUMBER, C_AXIS3_POLARITY, EPOS4_OP_CSV );
     //sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID4, C_PDO_NUMBER, C_AXIS4_POLARITY, EPOS4_OP_CSV );
     //sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID5, C_PDO_NUMBER, C_AXIS5_POLARITY, EPOS4_OP_CSV );
     //sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID6, C_PDO_NUMBER, C_AXIS6_POLARITY, EPOS4_OP_CSV );
-
+	#else
+	for(i=0;i<g_NUM_OF_SLAVES;i++)
+	{
+		sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1+i, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+	}
+	#endif
     sdkEtherCATMasterDoMapping();
-
     for (i = 1; i <= g_NUM_OF_SLAVES; i++) {
 	   sdkEtherCATSetupDC(C_AXIS1+i, C_EC_CYCLE_TIME, C_EC_OFFSET);    // Setup EtherCAT DC  (cycle_time [ms], offset [us]
     }
-
-	// starting the ethercat
+    //----------------------------------------------------------------
+	// Start the EtherCAT
+	//----------------------------------------------------------------
 	sdkEtherCATMasterStart();
 
-	// setup EtherCAT bus module for csp mode
-	for(i=0;i<g_NUM_OF_SLAVES;i++)
-	{
-		sdkEpos4_SetupECatBusModule(C_AXIS1+i, C_DRIVE_BUSID1+i, C_PDO_NUMBER, g_OP_MODE);
-	}
-	//sdkEpos4_SetupECatBusModule(C_AXIS1, C_DRIVE_BUSID1, C_PDO_NUMBER, EPOS4_OP_CSV);
+	//----------------------------------------------------------------
+	// Setup EtherCAT bus module (OP-MODE)
+	//----------------------------------------------------------------
+	#if g_ETHERCAT_CONFIG_INDIVIDUAL
+	sdkEpos4_SetupECatBusModule(C_AXIS1, C_DRIVE_BUSID1, C_PDO_NUMBER, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatBusModule(C_AXIS2, C_DRIVE_BUSID2, C_PDO_NUMBER, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatBusModule(C_AXIS3, C_DRIVE_BUSID3, C_PDO_NUMBER, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatBusModule(C_AXIS4, C_DRIVE_BUSID4, C_PDO_NUMBER, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatBusModule(C_AXIS5, C_DRIVE_BUSID5, C_PDO_NUMBER, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatBusModule(C_AXIS6, C_DRIVE_BUSID6, C_PDO_NUMBER, EPOS4_OP_CSV);
-
-	// setup virtual amplifier for csp mode
+	#else
 	for(i=0;i<g_NUM_OF_SLAVES;i++)
 	{
-		sdkEpos4_SetupECatVirtAmp(C_AXIS1+i, C_AXIS1_MAX_RPM, g_OP_MODE);
+		sdkEpos4_SetupECatBusModule(C_AXIS1+i, C_DRIVE_BUSID1+i, C_PDO_NUMBER, g_OP_MODE);
 	}
-	//sdkEpos4_SetupECatVirtAmp(C_AXIS1, C_AXIS1_MAX_RPM, EPOS4_OP_CSV);
+	#endif
+
+	//----------------------------------------------------------------
+	// Setup Virtual Amplifier following the OP-MODE
+	//----------------------------------------------------------------
+	#if g_ETHERCAT_CONFIG_INDIVIDUAL
+	sdkEpos4_SetupECatVirtAmp(C_AXIS1, C_AXIS1_MAX_RPM, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatVirtAmp(C_AXIS2, C_AXIS2_MAX_RPM, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatVirtAmp(C_AXIS3, C_AXIS3_MAX_RPM, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatVirtAmp(C_AXIS4, C_AXIS4_MAX_RPM, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatVirtAmp(C_AXIS5, C_AXIS5_MAX_RPM, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatVirtAmp(C_AXIS6, C_AXIS6_MAX_RPM, EPOS4_OP_CSV);
-
-	// setup irtual counter for csp mode
+	#else
 	for(i=0;i<g_NUM_OF_SLAVES;i++)
 	{
-		sdkEpos4_SetupECatVirtCntin(C_AXIS1+i, g_OP_MODE);
+		sdkEpos4_SetupECatVirtAmp(C_AXIS1+i, C_AXIS1_MAX_RPM, g_OP_MODE);
 	}
+	#endif
+
+	#if g_ETHERCAT_CONFIG_INDIVIDUAL
 	//sdkEpos4_SetupECatVirtCntin(C_AXIS1, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatVirtCntin(C_AXIS2, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatVirtCntin(C_AXIS3, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatVirtCntin(C_AXIS4, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatVirtCntin(C_AXIS5, EPOS4_OP_CSV);
     //sdkEpos4_SetupECatVirtCntin(C_AXIS6, EPOS4_OP_CSV);
+	#else
+	for(i=0;i<g_NUM_OF_SLAVES;i++)
+	{
+		sdkEpos4_SetupECatVirtCntin(C_AXIS1+i, g_OP_MODE);
+	}
+	#endif
 
 
+	#if g_ETHERCAT_CONFIG_INDIVIDUAL
 	#if g_NUM_OF_SLAVES >=1
 	// All axis have in this example the same parameters
 	sdkSetupAxisMovementParam(	C_AXIS1,
@@ -305,6 +330,40 @@ long EtherCAT_configuration()
 									);
 	#elif
 	print("[ERROR] Check the number of slaves");
+	#endif
+	#else
+	for(i=0;i<g_NUM_OF_SLAVES;i++)
+	{
+		// All axis have in this example the same parameters
+		sdkSetupAxisMovementParam(	C_AXIS1+i,
+									C_AXIS1_VELRES,
+									C_AXIS1_MAX_RPM,
+									C_AXIS1_RAMPTYPE,
+									C_AXIS1_RAMPMIN,
+									C_AXIS1_JERKMIN
+									);
+		// Definition of the user units
+		sdkSetupAxisUserUnits(		C_AXIS1+i,
+									C_AXIS1_POSENCREV,
+									C_AXIS1_POSENCQC,
+									C_AXIS1_POSFACT_Z,
+									C_AXIS1_POSFACT_N,
+									C_AXIS1_FEEDREV,
+									C_AXIS1_FEEDDIST
+									);
+		// Position control setup
+		sdkSetupPositionPIDControlExt( 	C_AXIS1+i,
+										C_AXIS1_KPROP,
+										C_AXIS1_KINT,
+										C_AXIS1_KDER,
+										C_AXIS1_KILIM,
+										C_AXIS1_KILIMTIME,
+										C_AXIS1_BANDWIDTH,
+										C_AXIS1_FFVEL,
+										C_AXIS1_KFFAC,
+										C_AXIS1_KFFDEC
+										);
+	}
 
 	#endif
 
@@ -314,7 +373,7 @@ long EtherCAT_configuration()
 	//----------------------------------------------------------------
 	ErrorClear();
 
-	return(0);
+	return(1);
 }
 
 

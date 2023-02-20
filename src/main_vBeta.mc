@@ -1,20 +1,23 @@
 #pragma once
 #include <SysDef.mh>
+//#include "C:\Users\bigyu\Desktop\Github repositories_Bigyuun\EtherCAT_MasterMACS_ws\include\SDK\SDK_ApossC.mc"
 #include "..\include\SDK\SDK_ApossC.mc"
 #include "..\include\user_definition.mh"
 #include "..\include\EtherCAT_config.mc"
+#include "..\include\TCPclient_config.mc"
 
 long slaveCount, i,j,k, homingState,slaveState;
 
 // DY
 long status_sm = -1;
 
-#define DEBUG_FLAG 					0
-#define SINE_WAVE_TEST_FLAG 		1
-
+// State Machine ID set
 #define STATE_MACHINE_ID_EtherCAT 	1
 #define STATE_MACHINE_ID_TCP		2
 
+// sine wave test parameters
+#define DEBUG_FLAG 					0
+#define SINE_WAVE_TEST_FLAG 		0
 #define PI 3.1415926
 #define SINE_WAVE_NORMAL_TIME		2.0 * PI			// normal
 #define SINE_WAVE_TIME  			10000				// time per 1 wave (ms)
@@ -46,6 +49,7 @@ long cnt_sine_wave = 0;
 ** Event Definitions
 *********************************************************************/
 
+// EtherCAT
 SmEvent SIG_PLAY { }
 SmEvent SIG_STOP { }
 SmEvent SIG_CLEAR { }
@@ -54,13 +58,14 @@ SmEvent SIG_PREOP { }
 SmEvent SIG_OP { }
 SmEvent SIG_ENABLE { }
 SmEvent SIG_DISABLE { }
-//SmEvent SIG_CONFIG {}
-
 SmEvent TICK_EtherCAT_MasterCommand{}
 SmEvent TICK_EtherCAT_Callback_SlaveFeedback{}
 SmEvent TICK_Configure_SineWave{}
+
+// TCP/IP
 SmEvent TICK_TCP_Receive{}
 SmEvent TICK_TCP_Send{}
+SmEvent TICK_TCP_ConnStatus{}
 
 long configure_EtherCAT();
 /*********************************************************************
@@ -115,16 +120,34 @@ SmState EtherCAT_Handler
                 // DY - If TCP state machine receive the message, this timer will be update the value
                 TICK_EtherCAT_MasterCommand =
                 			{
+                			#if SINE_WAVE_TEST_FLAG
                           	Cvel(C_AXIS1, pos[0]);	// set velocity (CSV)
   							USER_PARAM(5) = 1;		// start moving
+  							#endif
                             }
 
+				TICK_Configure_SineWave = {
 
+							#if SINE_WAVE_TEST_FLAG
+							cnt_sine_wave ++;   // increase 1 in every 1 ms
+							pos[0] = (double)SINE_WAVE_AMP * sin( SINE_WAVE_NORMAL_TIME * (1.0/(long)SINE_WAVE_TIME)*cnt_sine_wave);         // update global variable 'pos'
 
+							if(cnt_sine_wave >= SINE_WAVE_TIME)
+							{
+								cnt_sine_wave = 0;
+							}
+
+							#endif
+							}
+
+				TICK_EtherCAT_Callback_SlaveFeedback = {
+//							print("pos : ", Apos(C_AXIS1));
+//							print("Data pos : ", sendData[0]);
+							}
 
                 SIG_PLAY	  = {
                 				#if DEBUG_FLAG
-                                print("PLAY");
+                                //print("PLAY");
                                 #endif
 
                                 AxisCvelStart(C_AXIS1);
@@ -170,48 +193,31 @@ SmState TCPIP_Handler{
 
 	// DY
 	SIG_INIT = {
-		print("TCP/IP Handler Initializing");
-		print("data(tcp) = ", data[0]);
+				print("TCP/IP Handler Initializing");
+				return(0);
+				}
 
-		return(0);
-	}
+	// send the data (pos, vel)
+	SIG_START = {
+				 for(i=0;i<NUM_OF_MOTORS;i++){
+					 actual_pos[i]=Apos(C_AXIS1+i);
+					 actual_vel[i]=Avel(C_AXIS1+i);
+					 sendData[i]=actual_pos[i];
+					 sendData[i+NUM_OF_MOTORS]=actual_vel[i];
+				 }
+				 //TCP_sendmsg();
+				}
 
-	// DY - test for debuging gloabal variable is updates in each SM.
-	TICK_Configure_SineWave = {
+	SIG_IDLE = 		{
 
-		#if SINE_WAVE_TEST_FLAG
-		cnt_sine_wave ++;   // increase 1 in every 1 ms
-		pos[0] = (double)SINE_WAVE_AMP * sin( SINE_WAVE_NORMAL_TIME * (1.0/(long)SINE_WAVE_TIME)*cnt_sine_wave);         // update global variable 'pos'
+					}
 
-		if(cnt_sine_wave >= SINE_WAVE_TIME)
-		{
-			cnt_sine_wave = 0;
-		}
-
-		#if DEBUG_FLAG
-		if(cnt_sine_wave%100 == 0) {print("sin cnt = ", cnt_sine_wave, "/", pos[0]);}
-		#endif
-
-		#endif
-    }
-
-	// DY
-	// Receive data
-	// 1 ms term
-    TICK_TCP_Receive = {
-        // TCP receive function will be filled in.
-	print("pos : ", Apos(C_AXIS1));
-	print("vel : ", Avel(C_AXIS1));
-
-    }
-
-    // DY
-    // Send data
-	// 1 ms term
     TICK_TCP_Send = {
-        // TCP send function will be filled in.
+    				TCP_sendmsg();
+    				}
+    TICK_TCP_ConnStatus = {
+    	TCP_get_connection_status();
     }
-
 }
 
 
@@ -231,8 +237,6 @@ long main(void)
 	print(status_sm);
 
 	print("DY header : ", DY);
-
-	print("Operation Start");
 	printf("State Machines Run...");
   	status_sm = SmRun(SM_EtherCAT, SM_TCP); // Opearation 이라는 이름의 Statemachine을 실행.
 
@@ -251,21 +255,24 @@ long init_sm_EtherCAT(long id, long data[])
 	//configure_EtherCAT();
 	EtherCAT_configuration();
 
+	#if SINE_WAVE_TEST_FLAG
+	SmPeriod(1, id, TICK_Configure_SineWave);
+	#endif
+
+	#if DEBUG_FLAG
+	SmPeriod(500, id, TICK_EtherCAT_Callback_SlaveFeedback);
+	#endif
+
+
 	return(0);
 }
 
 // DY
 long init_sm_tcp(long id, long data[])
 {
-	data[0]=1;
-
-	#if SINE_WAVE_TEST_FLAG
-	SmPeriod(1, id, TICK_Configure_SineWave);
-	#endif
-
-	SmPeriod(1, id, TICK_TCP_Receive);
+	TCP_client_open();
 	SmPeriod(1, id, TICK_TCP_Send);
-
+	SmPeriod(500, id, TICK_TCP_ConnStatus);
 	return(0);
 }
 
