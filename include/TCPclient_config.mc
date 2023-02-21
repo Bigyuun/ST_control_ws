@@ -56,6 +56,8 @@ void TCP_receiveHandler(void)
 {
 	retVal = EthernetReceiveTelegram(socketHandle, receiveData);
 	//if(retVal !=0) print("TCP socket Error. check the network");
+	printf("rec : %ld", receiveData[0]);
+	print(receiveData);
 	return;
 }
 
@@ -66,7 +68,7 @@ long TCP_client_open(void)
 {
 	socketHandle = EthernetOpenClient(PROT_TCP, g_IP, g_PORT);
 
-	InterruptSetup(ETHERNET, TCP_receiveHandler, socketHandle);
+	//InterruptSetup(ETHERNET, TCP_receiveHandler, socketHandle);
 //	InterruptSetup(TIME, interrupt_test, 1000);
 //	InterruptEnable(ALL);
 
@@ -81,7 +83,7 @@ long TCP_client_open(void)
 
 long TCP_sendmsg()
 {
-	retVal = EthernetSendTelegram(socketHandle, sendData, 8);
+	retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
 	//if(retVal !=0) print("TCP socket Error. check the network");
 	return retVal;
 }

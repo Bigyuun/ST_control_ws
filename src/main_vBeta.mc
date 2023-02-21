@@ -17,7 +17,7 @@ long status_sm = -1;
 
 // sine wave test parameters
 #define DEBUG_FLAG 					0
-#define SINE_WAVE_TEST_FLAG 		0
+#define SINE_WAVE_TEST_FLAG 		1
 #define PI 3.1415926
 #define SINE_WAVE_NORMAL_TIME		2.0 * PI			// normal
 #define SINE_WAVE_TIME  			10000				// time per 1 wave (ms)
@@ -39,12 +39,12 @@ long cnt_sine_wave = 0;
 *********************************************************************/
 
 #pragma SmConfig {    1,        // Runtime flags.
-                      200,       // Event pool size.
-                      10,        // Maximum number of timers.
-                      400,        // Subscribe pool size.
-                      400,       // Param pool size.
-                      0,        // Position pool size.
-                      20 }       // System signal pool size (used for SmSystem.)
+                      1000,       // Event pool size.
+                      6,        // Maximum number of timers.
+                      1000,        // Subscribe pool size.
+                      1000,       // Param pool size.
+                      1000,        // Position pool size.
+                      100 }       // System signal pool size (used for SmSystem.)
 /*********************************************************************
 ** Event Definitions
 *********************************************************************/
@@ -66,6 +66,7 @@ SmEvent TICK_Configure_SineWave{}
 SmEvent TICK_TCP_Receive{}
 SmEvent TICK_TCP_Send{}
 SmEvent TICK_TCP_ConnStatus{}
+SmEvent TCP_RECEIVE_HANDLE{}
 
 long configure_EtherCAT();
 /*********************************************************************
@@ -141,8 +142,8 @@ SmState EtherCAT_Handler
 							}
 
 				TICK_EtherCAT_Callback_SlaveFeedback = {
-//							print("pos : ", Apos(C_AXIS1));
-//							print("Data pos : ", sendData[0]);
+							print("pos : ", Apos(C_AXIS1));
+							print("Data pos : ", sendData[0]);
 							}
 
                 SIG_PLAY	  = {
@@ -206,18 +207,22 @@ SmState TCPIP_Handler{
 					 sendData[i+NUM_OF_MOTORS]=actual_vel[i];
 				 }
 				 //TCP_sendmsg();
+				 //retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
 				}
 
 	SIG_IDLE = 		{
-
+					retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
 					}
 
     TICK_TCP_Send = {
-    				TCP_sendmsg();
+    				//TCP_sendmsg();
     				}
     TICK_TCP_ConnStatus = {
     	TCP_get_connection_status();
     }
+    TCP_RECEIVE_HANDLE = {
+    					TCP_receiveHandler();
+    					}
 }
 
 
@@ -228,7 +233,7 @@ SmState TCPIP_Handler{
 //SmMachine Operation {1, *, MyMachine, 20, 2}
 // DY
 SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 400, 20}
-SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 400, 20}
+SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 1000, 512}
 
 
 long main(void)
@@ -263,7 +268,6 @@ long init_sm_EtherCAT(long id, long data[])
 	SmPeriod(500, id, TICK_EtherCAT_Callback_SlaveFeedback);
 	#endif
 
-
 	return(0);
 }
 
@@ -271,7 +275,9 @@ long init_sm_EtherCAT(long id, long data[])
 long init_sm_tcp(long id, long data[])
 {
 	TCP_client_open();
-	SmPeriod(1, id, TICK_TCP_Send);
+	//InterruptSetup(ETHERNET, TCP_receiveHandler, socketHandle);
+	//SmPeriod(1, id, TICK_TCP_Send);
+	SmSystem(ETHERNET, socketHandle, STATE_MACHINE_ID_TCP, TCP_RECEIVE_HANDLE);
 	SmPeriod(500, id, TICK_TCP_ConnStatus);
 	return(0);
 }

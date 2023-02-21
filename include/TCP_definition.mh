@@ -26,8 +26,8 @@ double target_qd[NUM_OF_MOTORS] = {0};
 double target_qdd[NUM_OF_MOTORS] = {0};
 double target_current[NUM_OF_MOTORS] = {0};
 double target_moment[NUM_OF_MOTORS] = {0};
-double actual_pos[NUM_OF_MOTORS] = {0};
-double actual_vel[NUM_OF_MOTORS] = {0};
+long actual_pos[NUM_OF_MOTORS] = {0};
+long actual_vel[NUM_OF_MOTORS] = {0};
 
 
 // Receive protocal parameters

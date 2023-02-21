@@ -22,8 +22,8 @@
 #define TCP_BUFFER_SIZE 512
 #define QUEUE_FREQUENCY 1000    // Hz
 #define QUEUE_TIME      1       // ms
-#define TEST_RECV       1
-#define TEST_SEND       0
+#define TEST_RECV       0
+#define TEST_SEND       1
 
 #define ACTIVE_UR_ROBOT_PROTOCOL 0
 void ErrorHandling(const char* _Message);
@@ -92,13 +92,13 @@ int main(int argc, const char* argv[])
             std::cout << "TCP/IP disconnected... read() error" << std::endl;
             break;
         }
-        // printf("from client : %d, [%d]\n", recvMsg, strlen);
+        //printf("from client : %ld, [%d]\n", recvMsg, strlen);
         // std::cout << "atol : " << atol(recvMsg) << std::endl;;
         // std::cout << recvMsg << std::endl;
 
         memcpy(&recv_val[0], recvMsg, sizeof(long));
         std::cout << "long : " << recv_val[0] << std::endl;
-  
+        
         #endif
 
         #if TEST_SEND
