@@ -16,8 +16,8 @@ long status_sm = -1;
 #define STATE_MACHINE_ID_TCP		2
 
 // sine wave test parameters
-#define DEBUG_FLAG 					0
-#define SINE_WAVE_TEST_FLAG 		1
+#define DEBUG_FLAG 					1
+#define SINE_WAVE_TEST_FLAG 		0
 #define PI 3.1415926
 #define SINE_WAVE_NORMAL_TIME		2.0 * PI			// normal
 #define SINE_WAVE_TIME  			10000				// time per 1 wave (ms)
@@ -115,7 +115,10 @@ SmState EtherCAT_Handler
 								}
 
 				SIG_IDLE = 		{
-
+								 for(i=0;i<NUM_OF_MOTORS;i++){
+										actual_pos[i]=Apos(C_AXIS1+i);
+										actual_vel[i]=Avel(C_AXIS1+i);
+										}
 								}
 
                 // DY - If TCP state machine receive the message, this timer will be update the value
@@ -211,7 +214,8 @@ SmState TCPIP_Handler{
 				}
 
 	SIG_IDLE = 		{
-					retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
+					//retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
+					TCP_sendmsg();
 					}
 
     TICK_TCP_Send = {

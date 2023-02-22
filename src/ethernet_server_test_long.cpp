@@ -22,7 +22,7 @@
 #define TCP_BUFFER_SIZE 512
 #define QUEUE_FREQUENCY 1000    // Hz
 #define QUEUE_TIME      1       // ms
-#define TEST_RECV       0
+#define TEST_RECV       1
 #define TEST_SEND       1
 
 #define ACTIVE_UR_ROBOT_PROTOCOL 0
@@ -97,8 +97,8 @@ int main(int argc, const char* argv[])
         // std::cout << recvMsg << std::endl;
 
         memcpy(&recv_val[0], recvMsg, sizeof(long));
-        std::cout << "long : " << recv_val[0] << std::endl;
-        
+        std::cout << "long : " << recv_val[0] << " / data byte : " << strlen << std::endl;
+        //recv_val[0] = 0;
         #endif
 
         #if TEST_SEND
@@ -106,9 +106,9 @@ int main(int argc, const char* argv[])
         // std::getline(std::cin, sendMsg);
         // uint32_t size_of_sendMsg = send(hClntSock, sendMsg.c_str(), TCP_BUFFER_SIZE, 0);
         // uint32_t size_ofsenMsg = send(hClntSock, message, TCP_BUFFER_SIZE, 0);
-        send_val[0] = send_val[0]+1;
+        send_val[0] = counter;
         memcpy(sendMsg, &send_val[0], sizeof(long));
-        std::cout << "send : " << sendMsg << std::endl;
+        //std::cout << "send : " << sendMsg << std::endl;
         //std::string smsg = std::to_string(n++);
         // uint32_t size_ofsenMsg = send(hClntSock, smsg.c_str(), TCP_BUFFER_SIZE, 0);
         uint32_t size_ofsenMsg = send(hClntSock, sendMsg, TCP_BUFFER_SIZE, 0);
@@ -134,6 +134,7 @@ int main(int argc, const char* argv[])
         #endif
 
         counter++;
+        //std::cout << counter << std::endl;
         //std::this_thread::sleep_for(std::chrono::milliseconds(QUEUE_TIME));
     }
 
