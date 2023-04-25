@@ -84,7 +84,7 @@ long TCP_client_open(void)
 
 long TCP_sendmsg()
 {
-	retVal = EthernetSendTelegram(socketHandle, sendData, 512);
+	retVal = EthernetSendTelegram(socketHandle, sendData, 10);
 	//if(retVal !=0) print("TCP socket Error. check the network");
 	return retVal;
 }
