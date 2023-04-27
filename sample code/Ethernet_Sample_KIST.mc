@@ -1,6 +1,8 @@
 
 #include <SysDef.mh>
-#include "C:\Users\mmkhych\Desktop\Zub\SDK\ApossC-SDK-V01-12\SDK\SDK_ApossC.mc"
+//#include "C:\Users\mmkhych\Desktop\Zub\SDK\ApossC-SDK-V01-12\SDK\SDK_ApossC.mc"
+#include "..\include\SDK\SDK_ApossC.mc"
+
 
 long server_handle ; // Ethernet 통신 위한 Handle 값
 
@@ -179,8 +181,9 @@ long main(void)
 
 
 
-    server_handle = EthernetOpenServer(PROT_TCP, MY_PORT_NUM);
-
+    // server_handle = EthernetOpenServer(PROT_TCP, MY_PORT_NUM);
+    server_handle = EthernetOpenClient(PROT_TCP, 172.16.1.5, 1918);
+	printf("server_status = %d\n", server_handle);
 
     SYS_PROCESS(SYS_CANOM_MASTERSTATE) = 0;
     GLB_PARAM(CANSYNCTIMER) = 1;
@@ -188,6 +191,7 @@ long main(void)
     Delay(500);
 	ErrorClear();
 
+	print("EE");
 
    res = SmRun(Axis1_2StateMachine,Sm_Ethernet);
 
@@ -200,6 +204,7 @@ void EthernetSendData(void)
 
 
     Pattern_Send_data[0] = 0x01;
+    Pattern_Send_data[0] = (0xff)&(777);
     Pattern_Send_data[1] = 0x02;
     Pattern_Send_data[2] = 0x03;
     Pattern_Send_data[3] = 0x04;
@@ -887,14 +892,14 @@ void FunctionEthernetHandler(void)
 
 
     return;
-}//$X {Status,1,1,0,27,0,189,0,(-1),1},0x2000,190,0
+}//$X {Status,1,1,0,29,0,28,0,(-1),1},0x2000,29,0
 //$X {User Parameter (5),1,1,0,-1,0,-1,0,(-1),-1},0x2201,5,0
-//$X {CV_2,1,1,0,25,0,187,0,(-1),1},0x2000,188,0
-//$X {Recv_data,1,1,0,9,1,2,1,(0,60),1},0x2102,5,0
-//$X {Recv_data,1,1,0,9,1,2,1,(2,60),1},0x2102,7,0
-//$X {Recv_data,1,1,0,9,1,2,1,(3,60),1},0x2102,8,0
-//$X {Recv_data,1,1,0,9,1,2,1,(1,60),1},0x2102,6,0
-//$X {array1,1,1,0,8,1,1,1,(0,60),1},0x2101,5,0
-//$X {errNo,1,1,0,22,0,184,0,(-1),1},0x2000,185,0
-//$X {AX1_Error,1,1,0,20,0,182,0,(-1),1},0x2000,183,0
-//$X {AX2_Error,1,1,0,21,0,183,0,(-1),1},0x2000,184,0
+//$X {CV_2,1,1,0,27,0,26,0,(-1),1},0x2000,27,0
+//$X {Recv_data,1,1,0,11,1,2,1,(0,60),1},0x2102,5,0
+//$X {Recv_data,1,1,0,11,1,2,1,(2,60),1},0x2102,7,0
+//$X {Recv_data,1,1,0,11,1,2,1,(3,60),1},0x2102,8,0
+//$X {Recv_data,1,1,0,11,1,2,1,(1,60),1},0x2102,6,0
+//$X {array1,1,1,0,10,1,1,1,(0,60),1},0x2101,5,0
+//$X {errNo,1,1,0,24,0,23,0,(-1),1},0x2000,24,0
+//$X {AX1_Error,1,1,0,22,0,21,0,(-1),1},0x2000,22,0
+//$X {AX2_Error,1,1,0,23,0,22,0,(-1),1},0x2000,23,0

@@ -17,7 +17,7 @@
 #define NUM_OF_MOTORS 1
 // #define IP_ADDRESS "127.0.0.1"
 #define IP_ADDRESS "172.16.1.5"
-#define PORT_NUMBER "77777"
+#define PORT_NUMBER "7777"
 
 #define TCP_BUFFER_SIZE 512
 #define QUEUE_FREQUENCY 1000    // Hz
@@ -74,9 +74,9 @@ int main(int argc, const char* argv[])
     char message[] = "Hello World!";
 
     static char recvMsg[TCP_BUFFER_SIZE] = {0};
-    long recv_val[NUM_OF_MOTORS*2];
+    long recv_val[TCP_BUFFER_SIZE];
     // std::string sendMsg;
-    long send_val[NUM_OF_MOTORS] = {0};
+    long send_val[TCP_BUFFER_SIZE] = {0};
     char sendMsg[TCP_BUFFER_SIZE] = {};
     int strlen;
     static double joints_vel[7];
@@ -96,8 +96,26 @@ int main(int argc, const char* argv[])
         // std::cout << "atol : " << atol(recvMsg) << std::endl;;
         // std::cout << recvMsg << std::endl;
 
-        memcpy(&recv_val[0], recvMsg, sizeof(long));
-        std::cout << "long : " << recv_val[0] << " / data byte : " << strlen << std::endl;
+        memcpy(recv_val, recvMsg, TCP_BUFFER_SIZE);
+
+        // Little-Endian
+        long le_recv_val[TCP_BUFFER_SIZE];
+        // for (int i=0;i++;i<TCP_BUFFER_SIZE){
+        //     le_recv_val[i] = htonl(recv_val[i]);
+        // }
+        // le_recv_val[0] = htonl(recv_val[0]);
+
+        // std::cout << "long : " << le_recv_val[0] << std::endl;
+        // int i_le[1024];
+        // //memcpy(i_le, le_recv_val, sizeof(le_recv_val));
+        // // printf("hex : %x / int : %d\n",le_recv_val[0], i_le[0]);
+        // // printf("hex : %x / int : %d\n",recv_val[0], i_le[0]);
+        // printf("hes : %x / int : %ld\n", recvMsg[0]);
+        // printf("hex : %x / int : %ld\n",le_recv_val[0], le_recv_val[0]);
+        //printf("hex : %x / int : %ld\n",recv_val[0], recv_val[0]);
+        //std::cout << "long : " << recv_val[0] << " / data byte : " << strlen << std::endl;
+        std::cout << "pos : " << recv_val[0] << " / vel : " << recv_val[1] << std::endl;
+
         //recv_val[0] = 0;
         #endif
 
@@ -106,16 +124,12 @@ int main(int argc, const char* argv[])
         // std::getline(std::cin, sendMsg);
         // uint32_t size_of_sendMsg = send(hClntSock, sendMsg.c_str(), TCP_BUFFER_SIZE, 0);
         // uint32_t size_ofsenMsg = send(hClntSock, message, TCP_BUFFER_SIZE, 0);
-        send_val[0] = counter;
+        send_val[0] = counter*0.01;
         memcpy(sendMsg, &send_val[0], sizeof(long));
         //std::cout << "send : " << sendMsg << std::endl;
         //std::string smsg = std::to_string(n++);
         // uint32_t size_ofsenMsg = send(hClntSock, smsg.c_str(), TCP_BUFFER_SIZE, 0);
         uint32_t size_ofsenMsg = send(hClntSock, sendMsg, TCP_BUFFER_SIZE, 0);
-
-
-
-
         #endif
 
         #if ACTIVE_UR_ROBOT_PROTOCOL

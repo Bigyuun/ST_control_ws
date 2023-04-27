@@ -54,11 +54,19 @@ long TCP_get_connection_status(void)
 
 void TCP_receiveHandler(void)
 {
+	long i;
+
 	retVal = EthernetReceiveTelegram(socketHandle, receiveData);
 	//if(retVal !=0) print("TCP socket Error. check the network");
 	//printf("rec : %ld\n", receiveData);
 	//Dprint(receiveData[0]);
 	//print(receiveData);
+	for(i=0; i<NUM_OF_MOTORS;i++){
+		target_val[i].ub0 = receiveData[BUFFER_TYPE*i+0];
+		target_val[i].ub1 = receiveData[BUFFER_TYPE*i+1];
+		target_val[i].ub2 = receiveData[BUFFER_TYPE*i+2];
+		target_val[i].ub3 = receiveData[BUFFER_TYPE*i+3];
+	}
 	return;
 }
 
@@ -82,9 +90,10 @@ long TCP_client_open(void)
 	return(1);
 }
 
-long TCP_sendmsg()
+long TCP_sendmsg(long sendmsg[])
 {
-	retVal = EthernetSendTelegram(socketHandle, sendData, 10);
+	//retVal = EthernetSendTelegram(socketHandle, sendData, BUFFER_SIZE);
+	retVal = EthernetSendTelegram(socketHandle, sendmsg, BUFFER_SIZE);
 	//if(retVal !=0) print("TCP socket Error. check the network");
 	return retVal;
 }

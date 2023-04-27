@@ -1,4 +1,3 @@
-
 #pragma once
 #include <SysDef.mh>
 //#include "C:\Users\bigyu\Desktop\Github repositories_Bigyuun\EtherCAT_MasterMACS_ws\include\SDK\SDK_ApossC.mc"
@@ -18,7 +17,7 @@ long status_sm = -1;
 
 // sine wave test parameters
 #define DEBUG_FLAG 					1
-#define SINE_WAVE_TEST_FLAG 		1
+#define SINE_WAVE_TEST_FLAG 		0
 #define PI 3.1415926
 #define SINE_WAVE_NORMAL_TIME		2.0 * PI			// normal
 #define SINE_WAVE_TIME  			10000				// time per 1 wave (ms)
@@ -26,7 +25,7 @@ long status_sm = -1;
 #define SINE_WAVE_TIMER_FREQ        1000   // 1 kHz
 #define SINE_WAVE_TIMER_DURATION    1/SINE_WAVE_TIMER_FREQ  // 1 ms
 
-dim double pos[7]={0}, vel[7]={0}, acc[7]={0};
+dim long pos[7]={0}, vel[7]={0}, acc[7]={0};
 long cnt_sine_wave = 0;
 
 
@@ -40,11 +39,11 @@ long cnt_sine_wave = 0;
 *********************************************************************/
 
 #pragma SmConfig {    1,        // Runtime flags.
-                      1000,       // Event pool size.
+                      500,       // Event pool size.
                       6,        // Maximum number of timers.
-                      1000,        // Subscribe pool size.
-                      1000,       // Param pool size.
-                      1000,        // Position pool size.
+                      100,        // Subscribe pool size.
+                      100,       // Param pool size.
+                      100,        // Position pool size.
                       100 }       // System signal pool size (used for SmSystem.)
 /*********************************************************************
 ** Event Definitions
@@ -115,10 +114,10 @@ SmState EtherCAT_Handler
 								}
 
 				SIG_IDLE = 		{
-								 for(i=0;i<NUM_OF_MOTORS;i++){
-										actual_pos[i]=Apos(C_AXIS1+i);
-										actual_vel[i]=Avel(C_AXIS1+i);
-										}
+//								 for(i=0;i<NUM_OF_MOTORS;i++){
+//										actual_pos[i]=Apos(C_AXIS1+i);
+//										actual_vel[i]=Avel(C_AXIS1+i);
+//										}
 								}
 
                 // DY - If TCP state machine receive the message, this timer will be update the value
@@ -129,7 +128,15 @@ SmState EtherCAT_Handler
                 				Cvel(C_AXIS1+i, pos[0]);
                 			}
   							USER_PARAM(5) = 1;		// start moving
+  							#else
+  							for(i=0;i<NUM_OF_MOTORS;i++){
+                				Cvel(C_AXIS1+i, target_val[i]);
+                			}
+                			USER_PARAM(5) = 1;
   							#endif
+
+
+
                             }
 
 				TICK_Configure_SineWave = {
@@ -147,10 +154,11 @@ SmState EtherCAT_Handler
 							}
 
 				TICK_EtherCAT_Callback_SlaveFeedback = {
-							print("pos : ", Apos(C_AXIS1));
-							print("pos : ", Apos(C_AXIS2));
-							print("Data pos : ", sendData[0]);
-							}
+							print("pos : ", Apos(C_AXIS1), " / vel : ", Avel(C_AXIS1));
+//							print("pos : ", Apos(C_AXIS2));
+//							print("Data pos : ", sendData[0]);
+//							printf("Data pos(hex) %x: ", sendData[0]);
+							}	//$B
 
                 SIG_PLAY	  = {
 								for(i=0;i<NUM_OF_MOTORS;i++){
@@ -208,16 +216,28 @@ SmState TCPIP_Handler{
 				 for(i=0;i<NUM_OF_MOTORS;i++){
 					 actual_pos[i]=Apos(C_AXIS1+i);
 					 actual_vel[i]=Avel(C_AXIS1+i);
-					 sendData[i]=actual_pos[i];
-					 sendData[i+NUM_OF_MOTORS]=actual_vel[i];
+					 //sendData[i]=Apos(C_AXIS1+i);
+					 //sendData[i+NUM_OF_MOTORS]=actual_vel[i];
+					 sendData[i*8+0]=actual_pos[i].ub0;
+					 sendData[i*8+1]=actual_pos[i].ub1;
+					 sendData[i*8+2]=actual_pos[i].ub2;
+					 sendData[i*8+3]=actual_pos[i].ub3;
+
+					 sendData[i*8+4]=actual_vel[i].ub0;
+					 sendData[i*8+5]=actual_vel[i].ub1;
+					 sendData[i*8+6]=actual_vel[i].ub2;
+					 sendData[i*8+7]=actual_vel[i].ub3;
+
 				 }
+				 //sendData[0]=actual_pos[;
+				 TCP_sendmsg(sendData);
 				 //TCP_sendmsg();
 				 //retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
 				}
 
 	SIG_IDLE = 		{
 					//retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
-					TCP_sendmsg();
+					//TCP_sendmsg(sendData);
 					}
 
     TICK_TCP_Send = {
@@ -239,7 +259,7 @@ SmState TCPIP_Handler{
 //SmMachine Operation {1, *, MyMachine, 20, 2}
 // DY
 SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 400, 20}
-SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 1000, 512}
+SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 2048, 1024}
 
 
 long main(void)
@@ -284,7 +304,7 @@ long init_sm_tcp(long id, long data[])
 	//InterruptSetup(ETHERNET, TCP_receiveHandler, socketHandle);
 	//SmPeriod(1, id, TICK_TCP_Send);
 	SmSystem(ETHERNET, socketHandle, STATE_MACHINE_ID_TCP, TCP_RECEIVE_HANDLE);
-	SmPeriod(500, id, TICK_TCP_ConnStatus);
+	SmPeriod(1000, id, TICK_TCP_ConnStatus);
 	return(0);
 }
 

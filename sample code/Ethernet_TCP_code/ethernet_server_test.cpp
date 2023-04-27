@@ -16,7 +16,7 @@
 
 // #define IP_ADDRESS "127.0.0.1"
 #define IP_ADDRESS "172.16.1.5"
-#define PORT_NUMBER "77777"
+#define PORT_NUMBER "1918"
 
 #define TCP_BUFFER_SIZE 256
 #define QUEUE_FREQUENCY 1000    // Hz
