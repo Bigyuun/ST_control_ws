@@ -10,8 +10,19 @@
 #define g_PORT	1918
 #define BUFFER_SIZE	512
 #define BUFFER_TYPE 4	// long
+
+
+#define SOCK_STATUS_INIT 0
+#define SOCK_STATUS_WAITING 1
+#define SOCK_STATUS_CONNECTING 2
+#define SOCK_STATUS_READY 3
+#define SOCK_STATUS_CLOSED 4
+#define SOCK_STATUS_ERRORSENDING -1
+#define SOCK_STATUS_ERROR -2
+
+
 // TCP queue
-long socketHandle, status = -1;
+long socketHandle, status;
 
 dim long receiveData[BUFFER_SIZE];
 dim long sendData[BUFFER_SIZE];	// *2 : actual Pos & Vel
@@ -23,7 +34,6 @@ long retVal=0;
 long n=0;
 
 // Send protocal parameters
-long buf_size = 4;
 double timestamp = 0;
 double target_q[NUM_OF_MOTORS] = {0};
 double target_qd[NUM_OF_MOTORS] = {0};

@@ -1,3 +1,8 @@
+/***
+* @name : main.mc
+* @brief : No class structures, it doesn't available in ApossIDE
+***/
+
 #pragma once
 #include <SysDef.mh>
 //#include "C:\Users\bigyu\Desktop\Github repositories_Bigyuun\EtherCAT_MasterMACS_ws\include\SDK\SDK_ApossC.mc"
@@ -6,7 +11,8 @@
 #include "..\include\EtherCAT_config.mc"
 #include "..\include\TCPclient_config.mc"
 
-long slaveCount, i,j,k, homingState,slaveState;
+long i,j,k;
+long slaveCount, homingState, slaveState;
 
 // DY
 long status_sm = -1;
@@ -24,7 +30,6 @@ long status_sm = -1;
 #define SINE_WAVE_AMP				10
 #define SINE_WAVE_TIMER_FREQ        1000   // 1 kHz
 #define SINE_WAVE_TIMER_DURATION    1/SINE_WAVE_TIMER_FREQ  // 1 ms
-
 dim long pos[7]={0}, vel[7]={0}, acc[7]={0};
 long cnt_sine_wave = 0;
 
@@ -62,11 +67,10 @@ SmEvent TICK_EtherCAT_MasterCommand{}
 SmEvent TICK_EtherCAT_Callback_SlaveFeedback{}
 SmEvent TICK_Configure_SineWave{}
 
-// TCP/IP
-SmEvent TICK_TCP_Receive{}
-SmEvent TICK_TCP_Send{}
+// Ethernet TCP/IP
 SmEvent TICK_TCP_ConnStatus{}
 SmEvent TCP_RECEIVE_HANDLE{}
+SmEvent TCP_RECONNECT{}
 
 /*********************************************************************
 ** State Definitions
@@ -76,8 +80,6 @@ SmEvent TCP_RECEIVE_HANDLE{}
 SmState EtherCAT_Handler
 {
                 SIG_INIT = {
-                            //long cnt = 0;
-                            //print(status_sm) 	// 전역변수 전달 필요
                             SmSubscribe(id, SIG_ERROR);
                             SmParam (0x01220105, 1, SM_PARAM_EQUAL, id, SIG_PLAY);
                             SmParam (0x01220105, 2, SM_PARAM_EQUAL, id, SIG_STOP);
@@ -88,7 +90,10 @@ SmState EtherCAT_Handler
                             SmParam (0x01220105, 7, SM_PARAM_EQUAL, id, SIG_ENABLE);
                             SmParam (0x01220105, 8, SM_PARAM_EQUAL, id, SIG_DISABLE);
                             print("State Machine(EtherCAT) Init done");
-                            print("pos[0] = ", pos[0]);
+                            for(i=0;i<NUM_OF_MOTORS;i++) {
+                            	printf("#%ld Motor pos : %ld\n", i, Apos(C_AXIS1+i));
+                            }
+
                             return(SmTrans(->Standing));
                             }
 
@@ -104,23 +109,17 @@ SmState EtherCAT_Handler
     {
 				SIG_ENTRY  = 	{
                                 SmPeriod(1, id, TICK_EtherCAT_MasterCommand);
-                                print("into the Standing State ");
-                                print("Default User Parameter(USER_PARAM) = ", USER_PARAM(5));
                                 USER_PARAM(5) = 7;
 								}
 
 				SIG_START = 	{
-
 								}
 
 				SIG_IDLE = 		{
-//								 for(i=0;i<NUM_OF_MOTORS;i++){
-//										actual_pos[i]=Apos(C_AXIS1+i);
-//										actual_vel[i]=Avel(C_AXIS1+i);
-//										}
 								}
 
                 // DY - If TCP state machine receive the message, this timer will be update the value
+                // @issue : if use TCP data, synchronization is not exactly same.
                 TICK_EtherCAT_MasterCommand =
                 			{
                 			#if SINE_WAVE_TEST_FLAG
@@ -129,10 +128,10 @@ SmState EtherCAT_Handler
                 			}
   							USER_PARAM(5) = 1;		// start moving
   							#else
-  							for(i=0;i<NUM_OF_MOTORS;i++){
-                				Cvel(C_AXIS1+i, target_val[i]);
-                			}
-                			USER_PARAM(5) = 1;
+							for(i=0;i<NUM_OF_MOTORS;i++){
+							   Cvel(C_AXIS1+i, target_val[i]);
+						    }
+						    Sysvar[0x01220105] = 1;		// same as USER_PARAM(5) = 1;
   							#endif
 
 
@@ -154,10 +153,9 @@ SmState EtherCAT_Handler
 							}
 
 				TICK_EtherCAT_Callback_SlaveFeedback = {
-							print("pos : ", Apos(C_AXIS1), " / vel : ", Avel(C_AXIS1));
-//							print("pos : ", Apos(C_AXIS2));
-//							print("Data pos : ", sendData[0]);
-//							printf("Data pos(hex) %x: ", sendData[0]);
+								for(i=0;i<NUM_OF_MOTORS;i++) {
+									print("pos : ", Apos(C_AXIS1+i), " / vel : ", Avel(C_AXIS1+i));
+								}
 							}	//$B
 
                 SIG_PLAY	  = {
@@ -201,54 +199,61 @@ SmState EtherCAT_Handler
 }
 
 /***********************************************************************************************/
-// DY - TCP/IP Handler -> 2 timer(SmPeriod 1ms). each timer preceed the receive and send the data
+// DY - TCP/IP Handler
 // 2022.11.12 - TICK_Configure_Sinewave test for checking timer in 1 ms
 SmState TCPIP_Handler{
 
 	// DY
 	SIG_INIT = {
 				print("TCP/IP Handler Initializing");
-				return(0);
+				SmParam (0x01220103, 3, SM_PARAM_EQUAL, id, TCP_RECONNECT);
+				return(SmTrans(->Running));
 				}
+	SmState Running
+	{
+		// send the data (pos, vel)
+		SIG_START = {
+					 for(i=0;i<NUM_OF_MOTORS;i++){
+						 actual_pos[i]=Apos(C_AXIS1+i);
+						 actual_vel[i]=Avel(C_AXIS1+i);
 
-	// send the data (pos, vel)
-	SIG_START = {
-				 for(i=0;i<NUM_OF_MOTORS;i++){
-					 actual_pos[i]=Apos(C_AXIS1+i);
-					 actual_vel[i]=Avel(C_AXIS1+i);
-					 //sendData[i]=Apos(C_AXIS1+i);
-					 //sendData[i+NUM_OF_MOTORS]=actual_vel[i];
-					 sendData[i*8+0]=actual_pos[i].ub0;
-					 sendData[i*8+1]=actual_pos[i].ub1;
-					 sendData[i*8+2]=actual_pos[i].ub2;
-					 sendData[i*8+3]=actual_pos[i].ub3;
+						 // position values
+						 sendData[i*8+0]=actual_pos[i].ub0;
+						 sendData[i*8+1]=actual_pos[i].ub1;
+						 sendData[i*8+2]=actual_pos[i].ub2;
+						 sendData[i*8+3]=actual_pos[i].ub3;
+						 // velocity values
+						 sendData[i*8+4]=actual_vel[i].ub0;
+						 sendData[i*8+5]=actual_vel[i].ub1;
+						 sendData[i*8+6]=actual_vel[i].ub2;
+						 sendData[i*8+7]=actual_vel[i].ub3;
 
-					 sendData[i*8+4]=actual_vel[i].ub0;
-					 sendData[i*8+5]=actual_vel[i].ub1;
-					 sendData[i*8+6]=actual_vel[i].ub2;
-					 sendData[i*8+7]=actual_vel[i].ub3;
+	//					 sendData[i*8+4]=test_c.ub0;
+	//					 sendData[i*8+5]=test_c.ub1;
+	//					 sendData[i*8+6]=test_c.ub2;
+	//					 sendData[i*8+7]=test_c.ub3;
 
-				 }
-				 //sendData[0]=actual_pos[;
-				 TCP_sendmsg(sendData);
-				 //TCP_sendmsg();
-				 //retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
-				}
-
-	SIG_IDLE = 		{
-					//retVal = EthernetSendTelegram(socketHandle, actual_pos, 8);
-					//TCP_sendmsg(sendData);
+					 }
+					 TCP_sendmsg(sendData);
+					 //data[0]++;
 					}
 
-    TICK_TCP_Send = {
-    				//TCP_sendmsg();
-    				}
-    TICK_TCP_ConnStatus = {
-    	TCP_get_connection_status();
+		SIG_IDLE = 		{
+						}
+
+		TICK_TCP_ConnStatus = {data[1] = TCP_get_connection_status();
+								print("TCP_status = ", data[1]);
+								if(data[1] < 0) {
+									Sysvar[0x01220103] = 3;		// same as USER_PARMA(3)=3
+								}
+							  }
+		TCP_RECEIVE_HANDLE =  {TCP_receiveHandler();}
+
+		TCP_RECONNECT = {
+							TCP_client_open();
+							Sysvar[0x01220103] = 0;
+						}
     }
-    TCP_RECEIVE_HANDLE = {
-    					TCP_receiveHandler();
-    					}
 }
 
 
@@ -258,8 +263,8 @@ SmState TCPIP_Handler{
 
 //SmMachine Operation {1, *, MyMachine, 20, 2}
 // DY
-SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 400, 20}
-SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 2048, 1024}
+SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 400, 200}
+SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 400, 100}
 
 
 long main(void)
@@ -304,7 +309,7 @@ long init_sm_tcp(long id, long data[])
 	//InterruptSetup(ETHERNET, TCP_receiveHandler, socketHandle);
 	//SmPeriod(1, id, TICK_TCP_Send);
 	SmSystem(ETHERNET, socketHandle, STATE_MACHINE_ID_TCP, TCP_RECEIVE_HANDLE);
-	SmPeriod(1000, id, TICK_TCP_ConnStatus);
+	SmPeriod(100, id, TICK_TCP_ConnStatus);
 	return(0);
 }
 

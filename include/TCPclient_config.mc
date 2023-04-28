@@ -14,10 +14,11 @@
 /*********************************************************************
 ** State Definitions
 *********************************************************************/
-
-
-
-
+long TCP_get_connection_status(void);
+void TCP_receiveHandler(void);
+long TCP_client_open(void);
+long TCP_sendmsg(long sendmsg[]);
+long TCP_close(void);
 /*********************************************************************
 ** Initialization Functions
 *********************************************************************/
@@ -32,22 +33,37 @@ SOCK_STATUS_ERRORSENDING = -1,
 SOCK_STATUS_ERROR = -2			*/
 long TCP_get_connection_status(void)
 {
+	long i;
 	status = EthernetGetConnectionStatus(socketHandle);
 
 	switch(status){
 
-		case 0:
+		case SOCK_STATUS_INIT:
 			break;
-		case 1:
+		case SOCK_STATUS_WAITING:
 			break;
-		case 2:
+		case SOCK_STATUS_CONNECTING:
 			break;
-		case 3:
+		case SOCK_STATUS_READY:
 			break;
-	}
-
-	if(status == -2) {
-		printf("Socket Error! Check the connection (Error value : %ld)\n", status);
+		case SOCK_STATUS_CLOSED:
+			break;
+		case SOCK_STATUS_ERRORSENDING:
+			break;
+		case SOCK_STATUS_ERROR:
+			for(i=0; i<NUM_OF_MOTORS;i++) {
+			target_val[i]=0;
+			}
+			TCP_close();
+			printf("Socket Error! Check the connection (Error value : %ld). Reconnecting... \n", status);
+			break;
+//		default:
+//			for(i=0; i<NUM_OF_MOTORS;i++) {
+//			target_val[i]=0;
+//			}
+//			TCP_close();
+//			printf("Socket Error! Check the connection (Error value : %ld). Reconnecting... \n", status);
+//			break;
 	}
 	return status;
 }
@@ -61,11 +77,17 @@ void TCP_receiveHandler(void)
 	//printf("rec : %ld\n", receiveData);
 	//Dprint(receiveData[0]);
 	//print(receiveData);
-	for(i=0; i<NUM_OF_MOTORS;i++){
-		target_val[i].ub0 = receiveData[BUFFER_TYPE*i+0];
-		target_val[i].ub1 = receiveData[BUFFER_TYPE*i+1];
-		target_val[i].ub2 = receiveData[BUFFER_TYPE*i+2];
-		target_val[i].ub3 = receiveData[BUFFER_TYPE*i+3];
+	if (retVal == SOCK_STATUS_ERRORSENDING || retVal == SOCK_STATUS_ERROR) {
+		for(i=0; i<NUM_OF_MOTORS;i++) {
+			target_val[i]=0;
+		}
+	} else {
+		for(i=0; i<NUM_OF_MOTORS;i++){
+			target_val[i].ub0 = receiveData[BUFFER_TYPE*i+0];
+			target_val[i].ub1 = receiveData[BUFFER_TYPE*i+1];
+			target_val[i].ub2 = receiveData[BUFFER_TYPE*i+2];
+			target_val[i].ub3 = receiveData[BUFFER_TYPE*i+3];
+		}
 	}
 	return;
 }
@@ -76,7 +98,6 @@ void TCP_receiveHandler(void)
 long TCP_client_open(void)
 {
 	socketHandle = EthernetOpenClient(PROT_TCP, g_IP, g_PORT);
-
 	//InterruptSetup(ETHERNET, TCP_receiveHandler, socketHandle);
 //	InterruptSetup(TIME, interrupt_test, 1000);
 //	InterruptEnablSe(ALL);
@@ -92,10 +113,14 @@ long TCP_client_open(void)
 
 long TCP_sendmsg(long sendmsg[])
 {
-	//retVal = EthernetSendTelegram(socketHandle, sendData, BUFFER_SIZE);
 	retVal = EthernetSendTelegram(socketHandle, sendmsg, BUFFER_SIZE);
-	//if(retVal !=0) print("TCP socket Error. check the network");
 	return retVal;
+}
+
+long TCP_close(void)
+{
+	EthernetClose(socketHandle);
+	return 0;
 }
 
 
