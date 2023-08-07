@@ -1,11 +1,9 @@
-// #ifdef _WIN32
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 
 #pragma comment(lib, "ws2_32")
-#include <WinSock2.h>
+//#include <WinSock2.h>
 #include <WS2tcpip.h>
 
 #include <windows.h>
@@ -16,9 +14,9 @@
 #include <chrono>
 #include <thread>
 
-#define IP_ADDRESS "127.0.0.1"
-// #define IP_ADDRESS "172.16.1.5"
-#define PORT_NUMBER 1918
+// #define IP_ADDRESS "127.0.0.1"
+#define IP_ADDRESS "172.16.1.0"
+#define PORT_NUMBER 7777
 
 #define TCP_BUFFER_SIZE 512
 #define QUEUE_FREQUENCY 1000    // Hz
@@ -26,10 +24,18 @@
 #define TEST_RECV       1
 #define TEST_SEND       1
 
+#define NUM_OF_MOTORS 5
+
 #define ACTIVE_UR_ROBOT_PROTOCOL 0
+
+void ErrorHandling(const char* _Message);
 
 int main(int argc, char* argv[])
 {
+    /***
+     * @brief TCP client open part...
+     * ===========================================================================================
+    */
     WSADATA wsaData;
     SOCKET hSocket;
     SOCKADDR_IN serverAddress;
@@ -90,28 +96,53 @@ int main(int argc, char* argv[])
     memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = inet_addr(ip.c_str());
-    inet_pton(AF_INET, ip.c_str(), &serverAddress.sin_addr.s_addr);
+    //inet_pton(AF_INET, ip.c_str(), &serverAddress.sin_addr.s_addr);
     serverAddress.sin_port = htons(i_port);
     std::cout << "[INFO] connecting to server...";
     if(connect(hSocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) std::cout << "[ERROR] connect() error" << std::endl;
     else std::cout << "done" << std::endl;
     
+    // TCP client open part end
+    // ===========================================================================================
+
+
     static char recvMsg[TCP_BUFFER_SIZE] = {0};
-    std::string sendMsg;
+    long recv_val[TCP_BUFFER_SIZE];
+    long send_val[TCP_BUFFER_SIZE];
+    char sendMsg[TCP_BUFFER_SIZE];
     static double joints_vel[7];
     static uint64_t counter = 0;
     while(true)
     {   
         #if TEST_RECV
         strlen = recv(hSocket, recvMsg, TCP_BUFFER_SIZE, 0);
-        if(strlen == -1) std::cout << "read() error" << std::endl;
-        printf("from server : %s, [%d]\n", recvMsg, strlen);
+        if(strlen == -1) {
+            std::cout << "TCP/IP disconnected... read() error" << std::endl;
+            break;
+        }
+
+        // Little-Endian
+        memcpy(recv_val, recvMsg, TCP_BUFFER_SIZE);
+        system("cls");
+        for(int n=0; n<NUM_OF_MOTORS; n++){
+            std::cout << n << " pos : " << recv_val[0+n*2] << " / vel : " << recv_val[1+n*2] << " - " << counter << std::endl;
+        }
         #endif
 
         #if TEST_SEND
-        std::cout << "[Command] Enter the Send message : ";
-        std::getline(std::cin, sendMsg);
-        uint32_t size_of_sendMsg = send(hSocket, sendMsg.c_str(), TCP_BUFFER_SIZE, 0);
+
+        for(int i=0; i<NUM_OF_MOTORS; i++){
+            send_val[i] = counter*0.005;
+            memcpy(sendMsg + i*sizeof(long), &send_val[i], sizeof(send_val[i]));
+        }
+        uint32_t size_ofsendMsg = send(hSocket, sendMsg, TCP_BUFFER_SIZE, 0);
+
+        /*
+         * if use one-by-one telegram
+        */
+        // std::cout << "[Command] Enter the Send message : ";
+        // std::getline(std::cin, sendMsg);
+        // uint32_t size_of_sendMsg = send(hSocket, sendMsg.c_str(), TCP_BUFFER_SIZE, 0);
 
         #endif
 
@@ -131,8 +162,18 @@ int main(int argc, char* argv[])
         #endif
 
         counter++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(QUEUE_TIME));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(QUEUE_TIME));
     }
 
+    send(hSocket, message, sizeof(message), 0);
+    closesocket(hSocket);
+    WSACleanup();
     return 0;
+}
+
+void ErrorHandling(const char* _Message)
+{
+    fputs(_Message, stderr);
+    fputc('\n', stderr);
+    exit(1);
 }

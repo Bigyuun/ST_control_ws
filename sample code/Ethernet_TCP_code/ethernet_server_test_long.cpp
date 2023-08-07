@@ -14,10 +14,12 @@
 #include <chrono>
 #include <thread>
 
-#define NUM_OF_MOTORS 1
+// #define NUM_OF_MOTORS 1
 // #define IP_ADDRESS "127.0.0.1"
 #define IP_ADDRESS "172.16.1.5"
-#define PORT_NUMBER "1918"
+#define PORT_NUMBER "7777"
+
+#define NUM_OF_MOTORS 5
 
 #define TCP_BUFFER_SIZE 512
 #define QUEUE_FREQUENCY 1000    // Hz
@@ -87,48 +89,25 @@ int main(int argc, const char* argv[])
     {   
         #if TEST_RECV
         strlen = recv(hClntSock, recvMsg, TCP_BUFFER_SIZE, 0);
-        if(strlen == -1)
-        {
+        if (strlen == -1) {
             std::cout << "TCP/IP disconnected... read() error" << std::endl;
             break;
         }
-        //printf("from client : %ld, [%d]\n", recvMsg, strlen);
-        // std::cout << "atol : " << atol(recvMsg) << std::endl;;
-        // std::cout << recvMsg << std::endl;
-
-        memcpy(recv_val, recvMsg, TCP_BUFFER_SIZE);
 
         // Little-Endian
-        long le_recv_val[TCP_BUFFER_SIZE];
-        // for (int i=0;i++;i<TCP_BUFFER_SIZE){
-        //     le_recv_val[i] = htonl(recv_val[i]);
-        // }
-        // le_recv_val[0] = htonl(recv_val[0]);
-
-        // std::cout << "long : " << le_recv_val[0] << std::endl;
-        // int i_le[1024];
-        // //memcpy(i_le, le_recv_val, sizeof(le_recv_val));
-        // // printf("hex : %x / int : %d\n",le_recv_val[0], i_le[0]);
-        // // printf("hex : %x / int : %d\n",recv_val[0], i_le[0]);
-        // printf("hes : %x / int : %ld\n", recvMsg[0]);
-        // printf("hex : %x / int : %ld\n",le_recv_val[0], le_recv_val[0]);
-        //printf("hex : %x / int : %ld\n",recv_val[0], recv_val[0]);
-        //std::cout << "long : " << recv_val[0] << " / data byte : " << strlen << std::endl;
-        std::cout << "pos : " << recv_val[0] << " / vel : " << recv_val[1] << std::endl;
-
-        //recv_val[0] = 0;
+        memcpy(recv_val, recvMsg, TCP_BUFFER_SIZE);
+        system("cls");
+        for(int n=0; n<NUM_OF_MOTORS; n++){
+            std::cout << n << " pos : " << recv_val[0+n*2] << " / vel : " << recv_val[1+n*2] << " - " << counter << std::endl;
+        }
         #endif
 
         #if TEST_SEND
-        // std::cout << "[Command] Enter the Send message : ";
-        // std::getline(std::cin, sendMsg);
-        // uint32_t size_of_sendMsg = send(hClntSock, sendMsg.c_str(), TCP_BUFFER_SIZE, 0);
-        // uint32_t size_ofsenMsg = send(hClntSock, message, TCP_BUFFER_SIZE, 0);
-        send_val[0] = counter*0.01;
-        memcpy(sendMsg, &send_val[0], sizeof(long));
-        //std::cout << "send : " << sendMsg << std::endl;
-        //std::string smsg = std::to_string(n++);
-        // uint32_t size_ofsenMsg = send(hClntSock, smsg.c_str(), TCP_BUFFER_SIZE, 0);
+
+        for(int i=0; i<NUM_OF_MOTORS; i++){
+            send_val[i] = counter*0.005;
+            memcpy(sendMsg + i*sizeof(long), &send_val[i], sizeof(send_val[i]));
+        }
         uint32_t size_ofsenMsg = send(hClntSock, sendMsg, TCP_BUFFER_SIZE, 0);
         #endif
 
@@ -149,7 +128,7 @@ int main(int argc, const char* argv[])
 
         counter++;
         //std::cout << counter << std::endl;
-        //std::this_thread::sleep_for(std::chrono::milliseconds(QUEUE_TIME));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(QUEUE_TIME));
     }
 
 

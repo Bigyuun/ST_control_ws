@@ -7,8 +7,8 @@
 ** Application Defines
 *********************************************************************/
 #define g_IP	172.16.1.5
-#define g_PORT	1918
-#define BUFFER_SIZE	512
+#define g_PORT	7777
+#define BUFFER_SIZE	256
 #define BUFFER_TYPE 4	// long
 
 

@@ -28,7 +28,7 @@ long status_sm = -1;
 #define PI 3.1415926
 #define SINE_WAVE_NORMAL_TIME		2.0 * PI			// normal
 #define SINE_WAVE_TIME  			10000				// time per 1 wave (ms)
-#define SINE_WAVE_AMP				10
+#define SINE_WAVE_AMP				50
 #define SINE_WAVE_TIMER_FREQ        1000   // 1 kHz
 #define SINE_WAVE_TIMER_DURATION    1/SINE_WAVE_TIMER_FREQ  // 1 ms
 dim long pos[7]={0}, vel[7]={0}, acc[7]={0};
@@ -64,6 +64,7 @@ SmEvent SIG_PREOP { }
 SmEvent SIG_OP { }
 SmEvent SIG_ENABLE { }
 SmEvent SIG_DISABLE { }
+
 SmEvent TICK_EtherCAT_MasterCommand{}
 SmEvent TICK_EtherCAT_Callback_SlaveFeedback{}
 SmEvent TICK_Configure_SineWave{}
@@ -110,6 +111,7 @@ SmState EtherCAT_Handler
     {
 				SIG_ENTRY  = 	{
                                 SmPeriod(1, id, TICK_EtherCAT_MasterCommand);
+                                USER_PARAM(5) = 3;
                                 USER_PARAM(5) = 7;
 								}
 
@@ -155,7 +157,7 @@ SmState EtherCAT_Handler
 
 				TICK_EtherCAT_Callback_SlaveFeedback = {
 								for(i=0;i<NUM_OF_MOTORS;i++) {
-									print("pos : ", Apos(C_AXIS1+i), " / vel : ", Avel(C_AXIS1+i));
+								    printf("#%ld Motor pos : %ld / vel : %ld\n", i, Apos(C_AXIS1+i), Avel(C_AXIS1+i));
 								}
 							}	//$B
 
@@ -164,12 +166,12 @@ SmState EtherCAT_Handler
 									AxisCvelStart(C_AXIS1+i);
 								}
                                 //AxisCvelStart(AXALL);
-                                Sysvar[0x01220105] = 0;
+                                //Sysvar[0x01220105] = 0;
                             }
                 SIG_STOP	  = {
                                 print("STOP");
                                 AxisStop(AXALL);
-                                Sysvar[0x01220105] = 0;
+                                //Sysvar[0x01220105] = 0;
                             }
                 SIG_REINIT =  {
                 				return(SmTrans(Standing));
@@ -186,7 +188,7 @@ SmState EtherCAT_Handler
                                 print("CLEAR");
                                 ErrorClear();
                                 AmpErrorClear(AXALL);
-                                Sysvar[0x01220105] = 0;
+                                //Sysvar[0x01220105] = 0;
                             }
                 SIG_ENABLE = {
                                 print("Motor Enable");
@@ -214,26 +216,21 @@ SmState TCPIP_Handler{
 	{
 		// send the data (pos, vel)
 		SIG_START = {
-					 for(i=0;i<NUM_OF_MOTORS;i++){
-						 actual_pos[i]=Apos(C_AXIS1+i);
-						 actual_vel[i]=Avel(C_AXIS1+i);
-
+					 for(j=0;j<NUM_OF_MOTORS;j++){
+//						 actual_pos[j]=Apos(C_AXIS1+j);
+//						 actual_vel[j]=Avel(C_AXIS1+j);
+						 actual_pos[j]=Apos(j);
+						 actual_vel[j]=Avel(j);
 						 // position values
-						 sendData[i*8+0]=actual_pos[i].ub0;
-						 sendData[i*8+1]=actual_pos[i].ub1;
-						 sendData[i*8+2]=actual_pos[i].ub2;
-						 sendData[i*8+3]=actual_pos[i].ub3;
+						 sendData[j*8+0]=actual_pos[j].ub0;
+						 sendData[j*8+1]=actual_pos[j].ub1;
+						 sendData[j*8+2]=actual_pos[j].ub2;
+						 sendData[j*8+3]=actual_pos[j].ub3;
 						 // velocity values
-						 sendData[i*8+4]=actual_vel[i].ub0;
-						 sendData[i*8+5]=actual_vel[i].ub1;
-						 sendData[i*8+6]=actual_vel[i].ub2;
-						 sendData[i*8+7]=actual_vel[i].ub3;
-
-	//					 sendData[i*8+4]=test_c.ub0;
-	//					 sendData[i*8+5]=test_c.ub1;
-	//					 sendData[i*8+6]=test_c.ub2;
-	//					 sendData[i*8+7]=test_c.ub3;
-
+						 sendData[j*8+4]=actual_vel[j].ub0;
+						 sendData[j*8+5]=actual_vel[j].ub1;
+						 sendData[j*8+6]=actual_vel[j].ub2;
+						 sendData[j*8+7]=actual_vel[j].ub3;
 					 }
 					 TCP_sendmsg(sendData);
 					 //data[0]++;
@@ -248,6 +245,7 @@ SmState TCPIP_Handler{
 								printf("target_q = %f", target_q[0]);
 								#endif
 
+
 								/*
 								** @author - DY
 								** @brief if connection fail(disconnect any), TCP_RECONNECT function will be operated
@@ -260,8 +258,7 @@ SmState TCPIP_Handler{
 
 		TCP_RECONNECT = {
 							TCP_close();
-							TCP_client_open();
-							Sysvar[0x01220103] = 0;
+							TCP_server_open();
 						}
     }
 }
@@ -273,8 +270,8 @@ SmState TCPIP_Handler{
 
 //SmMachine Operation {1, *, MyMachine, 20, 2}
 // DY
-SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 400, 200}
-SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 400, 100}
+SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 500, 10 }
+SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 100, 10}
 
 
 long main(void)
@@ -297,7 +294,7 @@ long main(void)
 // DY
 long init_sm_EtherCAT(long id, long data[])
 {
-	data[0] = 0;
+	//data[0] = 0;
 	//configure_EtherCAT();
 	EtherCAT_configuration();
 
@@ -315,7 +312,7 @@ long init_sm_EtherCAT(long id, long data[])
 // DY
 long init_sm_tcp(long id, long data[])
 {
-	TCP_client_open();
+	TCP_server_open();
 	SmSystem(ETHERNET, socketHandle, STATE_MACHINE_ID_TCP, TCP_RECEIVE_HANDLE);
 	SmPeriod(100, id, TICK_TCP_ConnStatus);
 	return(0);

@@ -347,7 +347,14 @@ long main(void)
 	AmpErrorClear(C_AXIS3); // Clear error on EPOS4
     AmpErrorClear(C_AXIS4);
     AmpErrorClear(C_AXIS5); // Clear error on EPOS4
-    AmpErrorClear(C_AXIS6);
+
+    print(Apos(0));
+    print(Apos(1));
+    print(Apos(2));
+    print(Apos(3));
+    print(Apos(4 ));
+
+    //AmpErrorClear(C_AXIS6);
 
 
 
@@ -367,29 +374,31 @@ long main(void)
 	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID3, C_PDO_NUMBER, C_AXIS3_POLARITY, EPOS4_OP_CSP );
     sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID4, C_PDO_NUMBER, C_AXIS4_POLARITY, EPOS4_OP_CSP );
     sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID5, C_PDO_NUMBER, C_AXIS5_POLARITY, EPOS4_OP_CSP );
-    sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID6, C_PDO_NUMBER, C_AXIS6_POLARITY, EPOS4_OP_CSP );
-	for (i = 1; i <= 6; i++) {
+    //sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID6, C_PDO_NUMBER, C_AXIS6_POLARITY, EPOS4_OP_CSP );
+	for (i = 1; i <= 5; i++) {
 	   sdkEtherCATSetupDC(i, C_EC_CYCLE_TIME, C_EC_OFFSET);    // Setup EtherCAT DC  (cycle_time [ms], offset [us]
+	   print(i, " pos : ", Apos(i));
     }
 
 
 	// starting the ethercat
 	sdkEtherCATMasterStart();
-
+	print("sdkEtherCATMasterStart fin");
 	// setup EtherCAT bus module for csp mode
 	sdkEpos4_SetupECatBusModule(C_AXIS1, C_DRIVE_BUSID1, C_PDO_NUMBER, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatBusModule(C_AXIS2, C_DRIVE_BUSID2, C_PDO_NUMBER, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatBusModule(C_AXIS3, C_DRIVE_BUSID3, C_PDO_NUMBER, EPOS4_OP_CSP);
     sdkEpos4_SetupECatBusModule(C_AXIS4, C_DRIVE_BUSID4, C_PDO_NUMBER, EPOS4_OP_CSP);
     sdkEpos4_SetupECatBusModule(C_AXIS5, C_DRIVE_BUSID5, C_PDO_NUMBER, EPOS4_OP_CSP);
-    sdkEpos4_SetupECatBusModule(C_AXIS6, C_DRIVE_BUSID6, C_PDO_NUMBER, EPOS4_OP_CSP);
+    //sdkEpos4_SetupECatBusModule(C_AXIS6, C_DRIVE_BUSID6, C_PDO_NUMBER, EPOS4_OP_CSP);
+
 	// setup virtual amplifier for csp mode
 	sdkEpos4_SetupECatVirtAmp(C_AXIS1, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatVirtAmp(C_AXIS2, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatVirtAmp(C_AXIS3, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
     sdkEpos4_SetupECatVirtAmp(C_AXIS4, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatVirtAmp(C_AXIS5, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
-    sdkEpos4_SetupECatVirtAmp(C_AXIS6, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
+    //sdkEpos4_SetupECatVirtAmp(C_AXIS6, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	//
 	// setup irtual counter for csp mode
 	sdkEpos4_SetupECatVirtCntin(C_AXIS1, EPOS4_OP_CSP);
@@ -397,7 +406,7 @@ long main(void)
 	sdkEpos4_SetupECatVirtCntin(C_AXIS3, EPOS4_OP_CSP);
     sdkEpos4_SetupECatVirtCntin(C_AXIS4, EPOS4_OP_CSP);
     sdkEpos4_SetupECatVirtCntin(C_AXIS5, EPOS4_OP_CSP);
-    sdkEpos4_SetupECatVirtCntin(C_AXIS6, EPOS4_OP_CSP);
+    //sdkEpos4_SetupECatVirtCntin(C_AXIS6, EPOS4_OP_CSP);
 	// All axis have in this example the same parameters
 	for (i = 0; i < 1; i++) {
 		// Movement parameters for the axis
@@ -548,36 +557,36 @@ long main(void)
 										C_AXIS5_KFFAC,
 										C_AXIS5_KFFDEC
 										);
-       sdkSetupAxisMovementParam(	5,
-									C_AXIS6_VELRES,
-									C_AXIS6_MAX_RPM,
-									C_AXIS6_RAMPTYPE,
-									C_AXIS6_RAMPMIN,
-									C_AXIS6_JERKMIN
-									);
-
-		// Definition of the user units
-		sdkSetupAxisUserUnits(		5,
-									C_AXIS6_POSENCREV,
-									C_AXIS6_POSENCQC,
-									C_AXIS6_POSFACT_Z,
-									C_AXIS6_POSFACT_N,
-									C_AXIS6_FEEDREV,
-									C_AXIS6_FEEDDIST
-									);
-		// Position control setup
-		sdkSetupPositionPIDControlExt( 	5,
-										C_AXIS6_KPROP,
-										C_AXIS6_KINT,
-										C_AXIS6_KDER,
-										C_AXIS6_KILIM,
-										C_AXIS6_KILIMTIME,
-										C_AXIS6_BANDWIDTH,
-										C_AXIS6_FFVEL,
-										C_AXIS6_KFFAC,
-										C_AXIS6_KFFDEC
-										);
-
+//       sdkSetupAxisMovementParam(	5,
+//									C_AXIS6_VELRES,
+//									C_AXIS6_MAX_RPM,
+//									C_AXIS6_RAMPTYPE,
+//									C_AXIS6_RAMPMIN,
+//									C_AXIS6_JERKMIN
+//									);
+//
+//		// Definition of the user units
+//		sdkSetupAxisUserUnits(		5,
+//									C_AXIS6_POSENCREV,
+//									C_AXIS6_POSENCQC,
+//									C_AXIS6_POSFACT_Z,
+//									C_AXIS6_POSFACT_N,
+//									C_AXIS6_FEEDREV,
+//									C_AXIS6_FEEDDIST
+//									);
+//		// Position control setup
+//		sdkSetupPositionPIDControlExt( 	5,
+//										C_AXIS6_KPROP,
+//										C_AXIS6_KINT,
+//										C_AXIS6_KDER,
+//										C_AXIS6_KILIM,
+//										C_AXIS6_KILIMTIME,
+//										C_AXIS6_BANDWIDTH,
+//										C_AXIS6_FFVEL,
+//										C_AXIS6_KFFAC,
+//										C_AXIS6_KFFDEC
+//										);
+//
 	//----------------------------------------------------------------
 	// End of Application Setup
 	//----------------------------------------------------------------
@@ -609,7 +618,7 @@ long EtherCAT_REINIT (long id, long signal, long event[], long data[]) // EtherC
 	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID3, C_PDO_NUMBER, C_AXIS3_POLARITY, EPOS4_OP_CSP );
     sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID4, C_PDO_NUMBER, C_AXIS4_POLARITY, EPOS4_OP_CSP );
     sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID5, C_PDO_NUMBER, C_AXIS5_POLARITY, EPOS4_OP_CSP );
-    sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID6, C_PDO_NUMBER, C_AXIS6_POLARITY, EPOS4_OP_CSP );
+    //sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID6, C_PDO_NUMBER, C_AXIS6_POLARITY, EPOS4_OP_CSP );
 	for (i = 1; i <= 1; i++) {
 	                          sdkEtherCATSetupDC(i, C_EC_CYCLE_TIME, C_EC_OFFSET);    // Setup EtherCAT DC  (cycle_time [ms], offset [us]
                              }
@@ -621,14 +630,14 @@ long EtherCAT_REINIT (long id, long signal, long event[], long data[]) // EtherC
 	sdkEpos4_SetupECatBusModule(C_AXIS3, C_DRIVE_BUSID3, C_PDO_NUMBER, EPOS4_OP_CSP);
     sdkEpos4_SetupECatBusModule(C_AXIS4, C_DRIVE_BUSID4, C_PDO_NUMBER, EPOS4_OP_CSP);
     sdkEpos4_SetupECatBusModule(C_AXIS5, C_DRIVE_BUSID5, C_PDO_NUMBER, EPOS4_OP_CSP);
-    sdkEpos4_SetupECatBusModule(C_AXIS6, C_DRIVE_BUSID6, C_PDO_NUMBER, EPOS4_OP_CSP);
+    //sdkEpos4_SetupECatBusModule(C_AXIS6, C_DRIVE_BUSID6, C_PDO_NUMBER, EPOS4_OP_CSP);
 	// setup virtual amplifier for csp mode
 	sdkEpos4_SetupECatVirtAmp(C_AXIS1, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatVirtAmp(C_AXIS2, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatVirtAmp(C_AXIS3, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
     sdkEpos4_SetupECatVirtAmp(C_AXIS4, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	sdkEpos4_SetupECatVirtAmp(C_AXIS5, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
-    sdkEpos4_SetupECatVirtAmp(C_AXIS6, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
+    //sdkEpos4_SetupECatVirtAmp(C_AXIS6, C_AXIS_MAX_RPM, EPOS4_OP_CSP);
 	//
 	// setup irtual counter for csp mode
 	sdkEpos4_SetupECatVirtCntin(C_AXIS1, EPOS4_OP_CSP);
@@ -636,7 +645,7 @@ long EtherCAT_REINIT (long id, long signal, long event[], long data[]) // EtherC
 	sdkEpos4_SetupECatVirtCntin(C_AXIS3, EPOS4_OP_CSP);
     sdkEpos4_SetupECatVirtCntin(C_AXIS4, EPOS4_OP_CSP);
     sdkEpos4_SetupECatVirtCntin(C_AXIS5, EPOS4_OP_CSP);
-    sdkEpos4_SetupECatVirtCntin(C_AXIS6, EPOS4_OP_CSP);
+    //sdkEpos4_SetupECatVirtCntin(C_AXIS6, EPOS4_OP_CSP);
 
 	ErrorClear();
     AmpErrorClear(AXALL);
@@ -645,7 +654,7 @@ long EtherCAT_REINIT (long id, long signal, long event[], long data[]) // EtherC
 
 
 
-    AxisControl(C_AXIS1,ON,C_AXIS2,ON,C_AXIS3,ON,C_AXIS4,ON,C_AXIS5,ON,C_AXIS6,ON);
+    AxisControl(C_AXIS1,ON,C_AXIS2,ON,C_AXIS3,ON,C_AXIS4,ON,C_AXIS5,ON);
 	Sysvar[0x01220105] = 0;
     return(SmTrans(Standing));
 
@@ -662,7 +671,7 @@ SdoWrite(1000002,0x6040,0,0x80);
 SdoWrite(1000003,0x6040,0,0x80);
 SdoWrite(1000004,0x6040,0,0x80);
 SdoWrite(1000005,0x6040,0,0x80);
-SdoWrite(1000006,0x6040,0,0x80);
+//SdoWrite(1000006,0x6040,0,0x80);
 Delay(10);
 
 for (i = 1; i <= 1; i++) {

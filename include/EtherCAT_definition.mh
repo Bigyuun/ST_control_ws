@@ -104,7 +104,7 @@
 #define C_AXIS2_MAX_RPM			2000					// Maximum velocity in RPM
 #define C_AXIS2_VELRES			100						// Velocity resolution, Scaling used for the velocity and acceleration/deceleration commands, default
 #define C_AXIS2_RAMPTYPE		0	// Defines the ramptype
-#define C_AXIS2_RAMPMIN			2000						// Maximum acceleration
+#define C_AXIS2_RAMPMIN			800						// Maximum acceleration
 #define C_AXIS2_JERKMIN			1000					// Minimum time (ms) required before reaching the maximum acceleration
 #define C_AXIS2_TRACKERR		200000000					// There is also a following error on EPOS4, could be very high ond the MACS
 
@@ -136,7 +136,7 @@
 #define C_AXIS3_MAX_RPM			2000					// Maximum velocity in RPM
 #define C_AXIS3_VELRES			100						// Velocity resolution, Scaling used for the velocity and acceleration/deceleration commands, default
 #define C_AXIS3_RAMPTYPE		0	// Defines the ramptype
-#define C_AXIS3_RAMPMIN			2000						// Maximum acceleration
+#define C_AXIS3_RAMPMIN			800						// Maximum acceleration
 #define C_AXIS3_JERKMIN			1000					// Minimum time (ms) required before reaching the maximum acceleration
 #define C_AXIS3_TRACKERR		200000000				// There is also a following error on EPOS4, could be very high ond the MACS
 
@@ -168,7 +168,7 @@
 #define C_AXIS4_MAX_RPM			2000					// Maximum velocity in RPM
 #define C_AXIS4_VELRES			100						// Velocity resolution, Scaling used for the velocity and acceleration/deceleration commands, default
 #define C_AXIS4_RAMPTYPE		0	// Defines the ramptype
-#define C_AXIS4_RAMPMIN			2000						// Maximum acceleration
+#define C_AXIS4_RAMPMIN			800						// Maximum acceleration
 #define C_AXIS4_JERKMIN			1000					// Minimum time (ms) required before reaching the maximum acceleration
 #define C_AXIS4_TRACKERR		200000000					// There is also a following error on EPOS4, could be very high ond the MACS
 
@@ -200,7 +200,7 @@
 #define C_AXIS5_MAX_RPM			2000					// Maximum velocity in RPM
 #define C_AXIS5_VELRES			100						// Velocity resolution, Scaling used for the velocity and acceleration/deceleration commands, default
 #define C_AXIS5_RAMPTYPE		0	// Defines the ramptype
-#define C_AXIS5_RAMPMIN			2000						// Maximum acceleration
+#define C_AXIS5_RAMPMIN			800						// Maximum acceleration
 #define C_AXIS5_JERKMIN			1000					// Minimum time (ms) required before reaching the maximum acceleration
 #define C_AXIS5_TRACKERR		200000000					// There is also a following error on EPOS4, could be very high ond the MACS
 
@@ -233,7 +233,7 @@
 #define C_AXIS6_MAX_RPM			2000					// Maximum velocity in RPM
 #define C_AXIS6_VELRES			100						// Velocity resolution, Scaling used for the velocity and acceleration/deceleration commands, default
 #define C_AXIS6_RAMPTYPE		0	// Defines the ramptype
-#define C_AXIS6_RAMPMIN			2000						// Maximum acceleration
+#define C_AXIS6_RAMPMIN			800						// Maximum acceleration
 #define C_AXIS6_JERKMIN			1000					// Minimum time (ms) required before reaching the maximum acceleration
 #define C_AXIS6_TRACKERR		200000000					// There is also a following error on EPOS4, could be very high ond the MACS
 

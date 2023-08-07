@@ -16,13 +16,20 @@ long EtherCAT_configuration(void)
 	ErrorClear();
 
 	#if g_ETHERCAT_CONFIG_INDIVIDUAL
-	for(i=0,i<g_NUM_OF_SLAVES;i++)
+	for(i=0;i<g_NUM_OF_SLAVES;i++)
 	{
 		AmpErrorClear(i);
 	}
 	#else
-	AmpErrorClear(AXALL); 			// Clear error on EPOS4
+	//AmpErrorClear(AXALL); 			// Clear error on EPOS4
+
+	for(i=0;i<g_NUM_OF_SLAVES;i++)
+	{
+		AmpErrorClear(C_AXIS1+i);
+	}
+
 	#endif
+
 	ECatMasterCommand(0x1000, 0);	// The master itself
 
 
@@ -46,13 +53,22 @@ long EtherCAT_configuration(void)
 	#else
 	for(i=0;i<g_NUM_OF_SLAVES;i++)
 	{
-		sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1+i, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+		sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1+i, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE);
 	}
+//	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID1, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+//	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID2, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+//	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID3, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+//	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID4, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+//	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID5, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
+
 	#endif
     sdkEtherCATMasterDoMapping();
-    for (i = 1; i <= g_NUM_OF_SLAVES; i++) {
-	   sdkEtherCATSetupDC(C_AXIS1+i, C_EC_CYCLE_TIME, C_EC_OFFSET);    // Setup EtherCAT DC  (cycle_time [ms], offset [us]
+
+    for (i = 1; i <= 1; i++) {
+    //for (i = 1; i <= g_NUM_OF_SLAVES; i++) {
+	   sdkEtherCATSetupDC(i, C_EC_CYCLE_TIME, 0);    // Setup EtherCAT DC  (cycle_time [ms], offset [us]
     }
+
     //----------------------------------------------------------------
 	// Start the EtherCAT
 	//----------------------------------------------------------------
@@ -373,7 +389,12 @@ long EtherCAT_configuration(void)
 	//----------------------------------------------------------------
 	ErrorClear();
 
-	return(1);
+	for(i=0;i<g_NUM_OF_SLAVES;i++)
+	{
+		print("MPOS : ", Mapos(C_AXIS1+i));
+	}
+
+	return(0);
 }
 
 
