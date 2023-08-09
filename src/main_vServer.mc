@@ -252,7 +252,6 @@ SmState TCPIP_Handler{
 								print("TCP_status = ", data[1]);
 								printf("target_q = %f", target_q[0]);
 								#endif
-								print("TCP_status = ", data[1]);
 
 								/*
 								** @author - DY
@@ -265,11 +264,8 @@ SmState TCPIP_Handler{
 		TCP_RECEIVE_HANDLE =  {TCP_receiveHandler();}
 
 		TCP_RECONNECT = {
-							print("TCP_RECONNECTION...");
 							TCP_close();
-							print("CLOSED");
 							TCP_server_open();
-							print("OPEN");
 						}
     }
 }
