@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
         #if TEST_SEND
 
         for(int i=0; i<NUM_OF_MOTORS; i++){
-            send_val[i] = counter*0.005;
+            send_val[i] = 10*sin(counter*0.01);
             memcpy(sendMsg + i*sizeof(long), &send_val[i], sizeof(send_val[i]));
         }
         uint32_t size_ofsendMsg = send(hSocket, sendMsg, TCP_BUFFER_SIZE, 0);

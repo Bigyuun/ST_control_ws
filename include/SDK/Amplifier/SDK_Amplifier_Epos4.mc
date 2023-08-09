@@ -165,7 +165,7 @@ long sdkEpos4_SetupECatVirtCntin(long axis, long operationMode)
     }
     else if (operationMode==EPOS4_OP_CSV)	// cycle synchronous velocity (csv) mode
     {
-    	VIRTCOUNTIN_PARAM(axis,VIRTCNTIN_MODE) = VIRTCNTIN_MODE_ABSOLUTE;   		// Source is a position value and difference to last value is added
+    	VIRTCOUNTIN_PARAM(axis,VIRTCNTIN_MODE) = VIRTCNTIN_MODE_ABSOLUTE_DIRECT;//VIRTCNTIN_MODE_ABSOLUTE;   		// Source is a position value and difference to last value is added
     	print("...: cycle synchronous velocity (csv) mode");
     }
     else											// Error

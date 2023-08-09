@@ -157,7 +157,15 @@ SmState EtherCAT_Handler
 
 				TICK_EtherCAT_Callback_SlaveFeedback = {
 								for(i=0;i<NUM_OF_MOTORS;i++) {
-								    printf("#%ld Motor pos : %ld / vel : %ld\n", i, Apos(C_AXIS1+i), Avel(C_AXIS1+i));
+									/**
+									Apos : data from the virtual machine
+									BUSMOD_PROCESS : data from the EtherCAT
+									BUSMOD_PROCESS is same as Sysvar(----)
+									In Sysvar, just put 0x01, Index(e.g. 4C00), and SubIndex(02)
+									In Index 4th number is axis number : 4C0'axis number'
+									**/
+									printf("#%ld Motor pos : %ld / vel : %ld\n", i, Apos(C_AXIS1+i), Avel(C_AXIS1+i)); //Sysvar(0x014C0002);
+								    printf("#%ld Motor pos : %ld / vel : %ld\n", i, BUSMOD_PROCESS(0,PO_BUSMOD_VALUE2), Avel(C_AXIS1+i)); //Sysvar(0x014C0002);
 								}
 							}	//$B
 
@@ -244,7 +252,7 @@ SmState TCPIP_Handler{
 								print("TCP_status = ", data[1]);
 								printf("target_q = %f", target_q[0]);
 								#endif
-
+								print("TCP_status = ", data[1]);
 
 								/*
 								** @author - DY
@@ -257,8 +265,11 @@ SmState TCPIP_Handler{
 		TCP_RECEIVE_HANDLE =  {TCP_receiveHandler();}
 
 		TCP_RECONNECT = {
+							print("TCP_RECONNECTION...");
 							TCP_close();
+							print("CLOSED");
 							TCP_server_open();
+							print("OPEN");
 						}
     }
 }
@@ -270,8 +281,8 @@ SmState TCPIP_Handler{
 
 //SmMachine Operation {1, *, MyMachine, 20, 2}
 // DY
-SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 500, 10 }
-SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 100, 10}
+SmMachine SM_EtherCAT {STATE_MACHINE_ID_EtherCAT, init_sm_EtherCAT, EtherCAT_Handler, 400, 200 }
+SmMachine SM_TCP {STATE_MACHINE_ID_TCP, init_sm_tcp, TCPIP_Handler, 400, 100}
 
 
 long main(void)
@@ -319,3 +330,11 @@ long init_sm_tcp(long id, long data[])
 }
 
 
+//$X {PO_BUSMOD_VALUE1,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,1,0
+//$X {PO_BUSMOD_VALUE2,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,2,0
+//$X {PO_BUSMOD_VALUE3,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,3,0
+//$X {PO_BUSMOD_VALUE4,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,4,0
+//$X {PO_BUSMOD_VALUE5,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,5,0
+//$X {PO_BUSMOD_VALUE6,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,6,0
+//$X {PO_BUSMOD_VALUE7,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,7,0
+//$X {PO_BUSMOD_VALUE8,1,1,0,-1,0,-1,0,(-1),-1},0x4C00,8,0

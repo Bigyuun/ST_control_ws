@@ -62,18 +62,19 @@ long EtherCAT_configuration(void)
 //	sdkEpos4_SetupECatSdoParam(C_DRIVE_BUSID5, C_PDO_NUMBER, C_AXIS1_POLARITY, g_OP_MODE );
 
 	#endif
+	//Delay(10);
     sdkEtherCATMasterDoMapping();
-
-    for (i = 1; i <= 1; i++) {
+    //Delay(10);
+    for (i = 1; i <= g_NUM_OF_SLAVES; i++) {
     //for (i = 1; i <= g_NUM_OF_SLAVES; i++) {
 	   sdkEtherCATSetupDC(i, C_EC_CYCLE_TIME, 0);    // Setup EtherCAT DC  (cycle_time [ms], offset [us]
     }
-
+    //Delay(10);
     //----------------------------------------------------------------
 	// Start the EtherCAT
 	//----------------------------------------------------------------
 	sdkEtherCATMasterStart();
-
+    //Delay(10);
 	//----------------------------------------------------------------
 	// Setup EtherCAT bus module (OP-MODE)
 	//----------------------------------------------------------------
@@ -90,7 +91,7 @@ long EtherCAT_configuration(void)
 		sdkEpos4_SetupECatBusModule(C_AXIS1+i, C_DRIVE_BUSID1+i, C_PDO_NUMBER, g_OP_MODE);
 	}
 	#endif
-
+    //Delay(10);
 	//----------------------------------------------------------------
 	// Setup Virtual Amplifier following the OP-MODE
 	//----------------------------------------------------------------
@@ -107,7 +108,7 @@ long EtherCAT_configuration(void)
 		sdkEpos4_SetupECatVirtAmp(C_AXIS1+i, C_AXIS1_MAX_RPM, g_OP_MODE);
 	}
 	#endif
-
+    //Delay(10);
 	#if g_ETHERCAT_CONFIG_INDIVIDUAL
 	//sdkEpos4_SetupECatVirtCntin(C_AXIS1, EPOS4_OP_CSV);
 	//sdkEpos4_SetupECatVirtCntin(C_AXIS2, EPOS4_OP_CSV);
@@ -121,7 +122,7 @@ long EtherCAT_configuration(void)
 		sdkEpos4_SetupECatVirtCntin(C_AXIS1+i, g_OP_MODE);
 	}
 	#endif
-
+    //Delay(10);
 
 	#if g_ETHERCAT_CONFIG_INDIVIDUAL
 	#if g_NUM_OF_SLAVES >=1
