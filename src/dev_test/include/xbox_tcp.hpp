@@ -71,7 +71,7 @@ class TCPClientNode : public XboxNode
         ~TCPClientNode();
 
     private:
-        void Initialize();
+        uint8_t Initialize();
         void SendThread();
         void RecvThread();
         static void signal_callback_handler (int signum);
@@ -94,8 +94,8 @@ class TCPClientNode : public XboxNode
 
         int send_strlen_;
         int recv_strlen_;
-        char send_msg_[BUFFER_SIZE];
-        char recv_msg_[BUFFER_SIZE];
+        char send_msg_[BUFFER_SIZE] = {0,};
+        char recv_msg_[BUFFER_SIZE] = {0,};
 
         // std::shared_future<void> future_;
         // std::promise<void> exit_signal_;

@@ -58,7 +58,10 @@ TCPClientNode::TCPClientNode()
   // ***********************
   // Initializing
   // ***********************
-  this->Initialize();
+  if (this->Initialize()) {
+    std::cout << "[Class : TCPClientNode] Init Error" << std::endl;
+    return;
+  };
 
   // ***********************
   // Make Threads
@@ -79,12 +82,10 @@ TCPClientNode::TCPClientNode()
 }
 
 TCPClientNode::~TCPClientNode(){
-  this->send_thread_.join();
-  this->recv_thread_.join();
 }
 
 
-void TCPClientNode::Initialize() {
+uint8_t TCPClientNode::Initialize() {
 
   // ***********************
   // Default set
@@ -151,9 +152,10 @@ void TCPClientNode::Initialize() {
 
   if(connect(this->hSocket_, (SOCKADDR*)&this->ServerAddress_, sizeof(this->ServerAddress_)) == SOCKET_ERROR) {
     std::cout << "[ERROR] connect() error" << std::endl;
-    return;
+    return -1;
   } else {
     std::cout << "done" << std::endl;
+    return 0;
   } 
 }
 
@@ -172,6 +174,7 @@ void TCPClientNode::SendThread()
     }
     uint32_t size_ofsendMsg = send(this->hSocket_, this->send_msg_, BUFFER_SIZE, 0);
     counter++;
+    Sleep(1);
   }
 #else
   while (true) {
@@ -185,6 +188,7 @@ void TCPClientNode::SendThread()
       memcpy(this->send_msg_ + i*sizeof(long), &send_val[i], sizeof(send_val[i]));
     }
     uint32_t size_ofsendMsg = send(this->hSocket_, this->send_msg_, BUFFER_SIZE, 0);
+    Sleep(1);
   }
 #endif
   
@@ -194,6 +198,7 @@ void TCPClientNode::RecvThread()
 {
   std::cout << "TCP Receive Thread Start" << std::endl;
   long recv_val[BUFFER_SIZE];
+  static uint32_t counter = 0;
 
   // spin
   while(true) {
@@ -210,8 +215,9 @@ void TCPClientNode::RecvThread()
     memcpy(recv_val, this->recv_msg_, BUFFER_SIZE);
     system("cls");  // clear every time
     for(int n=0; n<NUM_OF_MOTORS; n++){
-        std::cout << n << " pos : " << recv_val[0+n*2] << " / vel : " << recv_val[1+n*2] << std::endl;
+        std::cout << "#" << n << "| pos : " << recv_val[0+n*2] << " / vel : " << recv_val[1+n*2] << " - " << counter++ << std::endl;
     }
+    Sleep(1);
   }
 }
 
