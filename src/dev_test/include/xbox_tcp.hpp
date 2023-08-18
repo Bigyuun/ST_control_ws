@@ -26,7 +26,7 @@
 #define IP_ADDRESS "172.16.1.0"
 #define PORT_NUMBER 7777
 
-#define NUM_OF_MOTORS 7
+#define NUM_OF_MOTORS 5
 #define BUFFER_SIZE 512
 #define KEYBOARD_INPUT_MODE 0
 
@@ -57,7 +57,7 @@ class XboxNode
     public:
         bool status_;
         XboxNode::JoystickData input_;
-        int32_t ros2_input_[NUM_OF_MOTORS]; // ROS2
+        int32_t ros2_input_[NUM_OF_MOTORS] = {0}; // ROS2
 
     private:
         std::thread readinput_thread_;
@@ -71,6 +71,7 @@ class TCPClientNode : public XboxNode
         ~TCPClientNode();
 
     private:
+        void Initialize();
         void SendThread();
         void RecvThread();
         static void signal_callback_handler (int signum);
@@ -86,6 +87,7 @@ class TCPClientNode : public XboxNode
         // char msg_[] = "";
 
     private:
+        uint32_t buffer_size_;
         std::thread send_thread_;
         std::thread recv_thread_;
         bool tcp_life = true;
@@ -98,7 +100,3 @@ class TCPClientNode : public XboxNode
         // std::shared_future<void> future_;
         // std::promise<void> exit_signal_;
 };
-
-
-// 클라이언트에서도 주소정보 초기화
-    struct sockaddr_in server_addr;

@@ -4,6 +4,7 @@
 
 XboxNode::XboxNode()
 {
+  this->InitController();
   readinput_thread_ = std::thread(&XboxNode::ReadInputThread, this);
   std::cout << "Thread (Xbox) is created." << std::endl;
 }
@@ -11,7 +12,24 @@ XboxNode::XboxNode()
 XboxNode::~XboxNode(){}
 
 void XboxNode::InitController() {
+  /**
+   * @brief Init function
+  */
+  this->input_.axis_x_right = 0;
+  this->input_.axis_y_right = 0;
+  this->input_.axis_x_left = 0;
+  this->input_.axis_y_left = 0;
+  this->input_.button_A = 0;
+  this->input_.button_B = 0;
+  this->input_.button_X = 0;
+  this->input_.button_Y = 0;
 
+  printf("[%d]ea ros2_input are initialized.", NUM_OF_MOTORS);
+  for(int i=0; i<NUM_OF_MOTORS; i++) {
+    this->ros2_input_[i] = {0};
+    printf(" (%d)", this->ros2_input_[i]);
+  }
+  printf("\n");
 }
 
 void XboxNode::ReadInputThread() {
@@ -21,18 +39,9 @@ void XboxNode::ReadInputThread() {
   while (true)
   {
     /* code */
-    this->input_.axis_x_right = 0;
-    this->input_.axis_y_right = 0;
-    this->input_.axis_x_left = 0;
-    this->input_.axis_y_left = 0;
-    this->input_.button_A = 0;
-    this->input_.button_B = 0;
-    this->input_.button_X = 0;
-    this->input_.button_Y = 0;
-    std::cout << "[Xbox] read " << std::endl;
-    Sleep(1000);
+    // std::cout << "[Xbox] read " << std::endl;
+    // Sleep(1000);
   }
-  
 }
 
 
@@ -47,6 +56,42 @@ void XboxNode::ReadInputThread() {
 TCPClientNode::TCPClientNode()
 {
   // ***********************
+  // Initializing
+  // ***********************
+  this->Initialize();
+
+  // ***********************
+  // Make Threads
+  // ***********************
+  this->send_thread_ = std::thread(&TCPClientNode::SendThread, this);
+  this->recv_thread_ = std::thread(&TCPClientNode::RecvThread, this);
+  std::cout << "Thread (Send, Recv) is created." << std::endl;
+
+  //signal(SIGINT, this->signal_callback_handler);
+  // while(true){
+  //   /**
+  //    * @brief spin
+  //   */
+  // }
+  this->send_thread_.join();
+  this->recv_thread_.join();
+  return;
+}
+
+TCPClientNode::~TCPClientNode(){
+  this->send_thread_.join();
+  this->recv_thread_.join();
+}
+
+
+void TCPClientNode::Initialize() {
+
+  // ***********************
+  // Default set
+  // ***********************
+  this->buffer_size_ = BUFFER_SIZE;
+
+  // ***********************
   // 1 - ip setting
   // ***********************
   while(true){
@@ -54,7 +99,7 @@ TCPClientNode::TCPClientNode()
     std::getline(std::cin, this->ip_);
     static uint8_t cnt = 0;
 
-    // set default4
+    // set default
     if(this->ip_ == "") {this->ip_ = IP_ADDRESS; std::cout << this->ip_ << std::endl; break;} 
     
     // set manual
@@ -110,24 +155,7 @@ TCPClientNode::TCPClientNode()
   } else {
     std::cout << "done" << std::endl;
   } 
-
-  // ***********************
-  // Make Threads
-  // ***********************
-  this->send_thread_ = std::thread(&TCPClientNode::SendThread, this);
-  this->recv_thread_ = std::thread(&TCPClientNode::RecvThread, this);
-  std::cout << "Thread (Send, Recv) is created." << std::endl;
-
-  //signal(SIGINT, this->signal_callback_handler);
-  // while(true){
-  //   /**
-  //    * @brief spin
-  //   */
-  // }
-  return;
 }
-
-TCPClientNode::~TCPClientNode(){}
 
 
 void TCPClientNode::SendThread()
@@ -211,6 +239,7 @@ int main(int argc, char* argv[]){
   while(true) {
 
   }
+
   return EXIT_SUCCESS;
 }
 
