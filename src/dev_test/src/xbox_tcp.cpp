@@ -171,6 +171,7 @@ void TCPClientNode::SendThread()
       memcpy(this->send_msg_ + i*sizeof(long), &send_val[i], sizeof(send_val[i]));
     }
     uint32_t size_ofsendMsg = send(this->hSocket_, this->send_msg_, BUFFER_SIZE, 0);
+    counter++;
   }
 #else
   while (true) {
