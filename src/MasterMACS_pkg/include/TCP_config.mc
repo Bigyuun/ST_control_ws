@@ -53,9 +53,15 @@ long TCP_get_connection_status(void)
 			break;
 		case SOCK_STATUS_CLOSED:
 			print("SOCKET_STATUS_CLOSED");
+			for(i=0; i<NUM_OF_MOTORS;i++) {
+				target_val[i]=0;
+			}
 			break;
 		case SOCK_STATUS_ERRORSENDING:
 			print("SOCKET_STATUS_ERRORSENDING");
+			for(i=0; i<NUM_OF_MOTORS;i++) {
+				target_val[i]=0;
+			}
 			break;
 		case SOCK_STATUS_ERROR:
 			for(i=0; i<NUM_OF_MOTORS;i++) {

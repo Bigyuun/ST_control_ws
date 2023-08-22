@@ -22,7 +22,7 @@ long status_sm = -1;
 #define STATE_MACHINE_ID_TCP		2
 
 // sine wave test parameters
-#define DEBUG_FLAG 					0
+#define DEBUG_FLAG 					1
 #define DEBUG_TCP_FLAG				0
 #define SINE_WAVE_TEST_FLAG 		0
 #define PI 3.1415926
